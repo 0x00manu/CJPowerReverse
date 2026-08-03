@@ -233,3 +233,19 @@ tshark -r .\usbInsert.pcapng -Y "usb"
 ```
 
 The installation was validated by reading `usbInsert.pcapng`: TShark recognized all 34 frames as USB/USBPcap traffic. Scapy, dpkt, and pyshark are not installed and are not currently required because TShark provides the authoritative Wireshark dissectors and machine-readable output.
+
+## .NET implementation
+
+`CJPowerReverse.slnx` targets .NET 10 and contains a dependency-free protocol library plus an offline executable test project.
+
+- `src/CJPowerReverse.Protocol` implements confirmed framing, CRC-16/CCITT-FALSE, operation/address masks, request construction, response checks, DTS integer encodings, and scaling.
+- `tests/CJPowerReverse.Protocol.Tests` validates the implementation with exact byte sequences recovered from `conReadWrite.pcapng`.
+- Both projects treat compiler warnings as errors.
+- Keep serial-port I/O separate from the protocol library so framing and value conversion remain testable without hardware.
+
+Build and test:
+
+```powershell
+dotnet build .\CJPowerReverse.slnx --configuration Release
+dotnet run --project .\tests\CJPowerReverse.Protocol.Tests --configuration Release --no-build
+```

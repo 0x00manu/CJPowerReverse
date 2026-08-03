@@ -266,3 +266,53 @@ The `.dts` file also contains repeated UI entries for addresses 1062, 1030, and 
 - Write safety constraints, commit behavior, and whether a reset is required after some changes remain to be established.
 
 Do not write undocumented or out-of-range values to a live motor controller. Reproduce read-only operations first and validate all generated CRCs before implementing write support.
+
+## .NET protocol library
+
+The solution [CJPowerReverse.slnx](CJPowerReverse.slnx) contains:
+
+- `src/CJPowerReverse.Protocol` - dependency-free .NET 10 class library
+- `tests/CJPowerReverse.Protocol.Tests` - offline executable verification suite using captured frames
+
+Build and verify it with:
+
+```powershell
+dotnet build .\CJPowerReverse.slnx --configuration Release
+dotnet run --project .\tests\CJPowerReverse.Protocol.Tests --configuration Release
+```
+
+Create a read request:
+
+```csharp
+using CJPowerReverse.Protocol;
+
+ProtocolFrame request = ProtocolMessages.CreateReadRequest(
+    address: 1132,
+    byteCount: 2);
+
+byte[] serialBytes = request.Encode();
+```
+
+Create a typed write request:
+
+```csharp
+long raw = DtsValueConverter.ToRaw(
+    displayedValue: 3300,
+    ratioK: 1,
+    ratioB: 0);
+
+byte[] value = ParameterValueCodec.Encode(raw, ParameterDataType.U16);
+ProtocolFrame request = ProtocolMessages.CreateWriteRequest(534, value);
+byte[] serialBytes = request.Encode();
+```
+
+Decode and validate a received frame:
+
+```csharp
+if (ProtocolFrameCodec.TryDecode(serialBytes, out ProtocolFrame? frame, out ProtocolDecodeError error))
+{
+    Console.WriteLine($"{frame.Operation} address {frame.Address}");
+}
+```
+
+The decoder validates the header, declared length, terminator, and CRC before returning a frame. Serial-port discovery, connection management, retries, timeouts, and live writes are intentionally outside the class library at this stage.
