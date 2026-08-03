@@ -242,6 +242,8 @@ The installation was validated by reading `usbInsert.pcapng`: TShark recognized 
 - `tests/CJPowerReverse.Protocol.Tests` validates the implementation with exact byte sequences recovered from `conReadWrite.pcapng`.
 - Both projects treat compiler warnings as errors.
 - Keep serial-port I/O separate from the protocol library so framing and value conversion remain testable without hardware.
+- `tools/CJPowerReverse.HWTest` is the read-only real-hardware console client. It accepts one COM-port argument, uses 115200 8N1/no flow control/DTR on/RTS off, reads unique addresses from `conReadWrite.dts`, and never sends writes or unconfirmed commands.
+- HWTest depends on the official `System.IO.Ports` 10.0.0 NuGet package. The protocol library itself remains dependency-free.
 
 Build and test:
 

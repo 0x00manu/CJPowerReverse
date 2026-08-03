@@ -316,3 +316,52 @@ if (ProtocolFrameCodec.TryDecode(serialBytes, out ProtocolFrame? frame, out Prot
 ```
 
 The decoder validates the header, declared length, terminator, and CRC before returning a frame. Serial-port discovery, connection management, retries, timeouts, and live writes are intentionally outside the class library at this stage.
+
+## Hardware read test
+
+`tools/CJPowerReverse.HWTest` is a read-only console program for testing the reconstructed protocol against a real controller.
+
+Run it from the repository root and pass the Windows COM-port name as its only argument:
+
+```powershell
+dotnet run --project .\tools\CJPowerReverse.HWTest -- COM5
+```
+
+The program opens the port using the settings recovered from the successful capture:
+
+```text
+Baud rate:    115200
+Data bits:    8
+Parity:       None
+Stop bits:    1
+Flow control: None
+DTR:          Enabled
+RTS:          Disabled
+```
+
+It loads `conReadWrite.dts`, reads every unique parameter address using the size declared by `adrSize`, validates each response and CRC, applies `ratio_K` and `ratio_B`, and displays the raw and scaled values. Picker values include their text label when the returned index is known.
+
+Each address is attempted up to three times with a 750 ms response timeout. Duplicate DTS entries reuse the result from their shared address. A failed parameter is reported without stopping the remaining reads.
+
+Safety boundary: HWTest only constructs `0x8000 | address` read requests. It does not send write frames, commit commands, reset commands, or the two unconfirmed final commands seen in the Windows application capture.
+
+Typical output format:
+
+```text
+Port: COM5 at 115200 8N1, flow control none, DTR on, RTS off
+Mode: read-only; no write or commit commands will be sent
+
+Group 1
+----------------------------------------------------------------------------------------------------
+  534  MaxSpeed(rpm):                   U16 raw=        3300  value=        3300
+```
+
+Exit codes:
+
+| Code | Meaning |
+|---:|---|
+| 0 | Every unique address was read successfully |
+| 2 | Missing or invalid command-line arguments |
+| 3 | DTS file could not be loaded |
+| 4 | COM port could not be opened |
+| 5 | One or more parameter reads failed |
