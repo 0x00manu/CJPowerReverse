@@ -1,0 +1,1525 @@
+[
+    [
+        {
+            "title": "MaxSpeed(rpm):",
+            "uiType": "field",
+            "value": 4100,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "534",
+            "adrSize": "u16"
+        },
+        {
+            "title": "PhaseAngle:",
+            "uiType": "field",
+            "value": -6916,
+            "max": "32767",
+            "min": "-32768",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "566",
+            "adrSize": "i16"
+        },
+        {
+            "title": "Poles:",
+            "uiType": "field",
+            "max": "1000",
+            "min": "0",
+            "value": 5,
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "568",
+            "adrSize": "u16"
+        },
+        {
+            "title": "SalientRatio:",
+            "uiType": "field",
+            "max": "255",
+            "min": "0",
+            "value": 10,
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1117",
+            "adrSize": "u8"
+        },
+        {
+            "title": "PosSensor:",
+            "uiType": "picker",
+            "max": 3,
+            "min": "0",
+            "value": 0,
+            "adress": "565",
+            "adrSize": "u8",
+            "data": [
+                "Hall120/EncoderAB",
+                "Hall60/EncoderBA",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "EncderPulseNum:",
+            "uiType": "field",
+            "value": 1497,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "572",
+            "adrSize": "u16"
+        },
+        {
+            "title": "MotorSensorModel:",
+            "uiType": "picker",
+            "value": 5,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1131",
+            "data": [
+                "KTY84-130",
+                "KTY84-150",
+                "KTY83-122",
+                "PT1000",
+                "PT100",
+                "NTC-10K",
+                "NTC-100K",
+                "NoSet"
+            ],
+            "adrSize": "u8"
+        },
+        {
+            "title": "MotorSensorEn:",
+            "uiType": "picker",
+            "value": 1,
+            "max": "2",
+            "min": "0",
+            "adress": "604",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "MotorTempWarn(℃):",
+            "uiType": "field",
+            "value": 110,
+            "max": "255",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 40,
+            "adress": "606",
+            "adrSize": "u8"
+        },
+        {
+            "title": "MotorTempOver(℃):",
+            "uiType": "field",
+            "value": 125,
+            "max": "255",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 40,
+            "adress": "607",
+            "adrSize": "u8"
+        }
+    ],
+    [
+        {
+            "title": "DriverMode",
+            "uiType": "picker",
+            "value": 1,
+            "max": "2",
+            "min": "0",
+            "adress": "1065",
+            "adrSize": "u8",
+            "data": [
+                "Eco",
+                "Normal",
+                "Sport",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "AccRatio:",
+            "uiType": "field",
+            "value": 20,
+            "max": "65535",
+            "min": "1",
+            "ratio_K": 1000,
+            "ratio_B": 0,
+            "adress": "668",
+            "adrSize": "u32"
+        },
+        {
+            "title": "DecRatio:",
+            "uiType": "field",
+            "value": 5,
+            "max": "100",
+            "min": "1",
+            "ratio_K": 1000,
+            "ratio_B": 0,
+            "adress": "672",
+            "adrSize": "u32"
+        },
+        {
+            "title": "OverVolt(V):",
+            "uiType": "field",
+            "value": "5.0",
+            "max": "5.5",
+            "min": "4.5",
+            "ratio_K": 744.73,
+            "ratio_B": 0,
+            "adress": "1040",
+            "adrSize": "u16"
+        },
+        {
+            "title": "UnderVolt(V):",
+            "uiType": "field",
+            "value": 0,
+            "max": "1.5",
+            "min": "0",
+            "ratio_K": 744.73,
+            "ratio_B": 0,
+            "adress": "1042",
+            "adrSize": "u16"
+        },
+        {
+            "title": "ValidVoltH(V):",
+            "uiType": "field",
+            "value": "4.0",
+            "max": "5.5",
+            "min": "2.5",
+            "ratio_K": 744.73,
+            "ratio_B": 0,
+            "adress": "1036",
+            "adrSize": "u16"
+        },
+        {
+            "title": "ValidVoltL(V):",
+            "uiType": "field",
+            "value": "1.0",
+            "max": "2.5",
+            "min": "0",
+            "ratio_K": 744.73,
+            "ratio_B": 0,
+            "adress": "1038",
+            "adrSize": "u16"
+        },
+        {
+            "title": "ShipThrottleEn:",
+            "uiType": "picker",
+            "value": 2,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1130",
+            "adrSize": "u8",
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "ShipThrottleInitVolt(V):",
+            "uiType": "field",
+            "value": 0,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 744.73,
+            "ratio_B": 0,
+            "adress": "1132",
+            "adrSize": "u16"
+        }
+    ],
+    [
+        {
+            "title": "OverProVolt(V):",
+            "uiType": "field",
+            "value": 100,
+            "max": "100",
+            "min": "48",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "576",
+            "adrSize": "u16"
+        },
+        {
+            "title": "OverReoVolt(V):",
+            "uiType": "field",
+            "value": 98,
+            "max": "100",
+            "min": "48",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "578",
+            "adrSize": "u16"
+        },
+        {
+            "title": "UnderProVolt(V):",
+            "uiType": "field",
+            "value": 44,
+            "max": "94",
+            "min": "24",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "580",
+            "adrSize": "u16"
+        },
+        {
+            "title": "UnderReoVolt(V):",
+            "uiType": "field",
+            "value": 46,
+            "max": "94",
+            "min": "26",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "582",
+            "adrSize": "u16"
+        },
+        {
+            "title": "UnVoltWarnGap(V):",
+            "uiType": "field",
+            "value": 2,
+            "max": "94",
+            "min": "26",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1172",
+            "adrSize": "u8"
+        },
+        {
+            "title": "MaxDcCur(A):",
+            "uiType": "field",
+            "value": 100,
+            "max": "2000",
+            "min": "5",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "632",
+            "adrSize": "u16"
+        },
+        {
+            "title": "DcCurCalPara:",
+            "uiType": "field",
+            "value": 120,
+            "max": "255",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1119",
+            "adrSize": "u8"
+        },
+        {
+            "title": "MaxPhaseCur(A):",
+            "uiType": "field",
+            "value": "290.0",
+            "max": "2000",
+            "min": "10",
+            "ratio_K": 33.03,
+            "ratio_B": 0,
+            "adress": "532",
+            "adrSize": "i16"
+        },
+        {
+            "title": "(S)MaxPhaseCur(A):",
+            "uiType": "field",
+            "value": 0,
+            "max": "8000000",
+            "min": "-8000000",
+            "ratio_K": 33.03,
+            "ratio_B": 0,
+            "adress": "938",
+            "adrSize": "i32"
+        },
+        {
+            "title": "PhaseCurCalPara:",
+            "uiType": "field",
+            "value": 1,
+            "max": "1000",
+            "min": "0",
+            "ratio_K": -1,
+            "ratio_B": 0,
+            "adress": "1124",
+            "adrSize": "i16"
+        },
+        {
+            "title": "MaxDcFdbCur(A):",
+            "uiType": "field",
+            "value": 5,
+            "max": "200",
+            "min": "0",
+            "ratio_K": -1,
+            "ratio_B": 0,
+            "adress": "634",
+            "adrSize": "i16"
+        },
+        {
+            "title": "OffThrotleDcCur(A):",
+            "uiType": "field",
+            "value": 2,
+            "max": "32767",
+            "min": "-32767",
+            "ratio_K": -1,
+            "ratio_B": 0,
+            "adress": "1147",
+            "adrSize": "i16"
+        },
+        {
+            "title": "VoltPlatform(V):",
+            "uiType": "picker",
+            "value": 0,
+            "max": "3",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1113",
+            "adrSize": "u8",
+            "data": [
+                "48V",
+                "60V",
+                "72V",
+                "NoSet"
+            ]
+        }
+    ],
+    [
+        {
+            "title": "CruiseEn:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1003",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "ParkEn:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1002",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "ExitParkMode:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1064",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Park",
+                "SideStand",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "SlopeEn:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1063",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "AntiTheftEn:",
+            "uiType": "picker",
+            "value": 1,
+            "max": "2",
+            "min": "0",
+            "adress": "1001",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "GearSEn:",
+            "uiType": "picker",
+            "value": 1,
+            "max": "2",
+            "min": "0",
+            "adress": "1008",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "BrakeEn:",
+            "uiType": "picker",
+            "value": 1,
+            "max": "2",
+            "min": "0",
+            "adress": "1000",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "SideStandEn:",
+            "uiType": "picker",
+            "value": 1,
+            "max": "2",
+            "min": "0",
+            "adress": "1007",
+            "adrSize": "u8",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "ReverseMode:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1062",
+            "adrSize": "u8",
+            "data": [
+                "Throttle",
+                "Button",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "RevCurPercent(%):",
+            "uiType": "field",
+            "value": 15,
+            "max": "100",
+            "min": "10",
+            "ratio_K": -10,
+            "ratio_B": 0,
+            "adress": "1030",
+            "adrSize": "i16"
+        },
+        {
+            "title": "RevSpdPercent(%):",
+            "uiType": "field",
+            "value": 10,
+            "max": "100",
+            "min": "10",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "1032",
+            "adrSize": "i16"
+        },
+        {
+            "title": "HotControl:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "4",
+            "min": "0",
+            "adress": "1123",
+            "adrSize": "u8",
+            "data": [
+                "Disable",
+                "Normal",
+                "Enhance",
+                "Strong",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "AutoEnterPark(S):",
+            "uiType": "field",
+            "value": 180,
+            "max": "1000000",
+            "min": "0",
+            "ratio_K": 200,
+            "ratio_B": 0,
+            "adress": "1022",
+            "adrSize": "u32"
+        },
+        {
+            "title": "SpdClearPara:",
+            "uiType": "field",
+            "value": 4000,
+            "max": "1000000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1126",
+            "adrSize": "u16"
+        },
+        {
+            "title": "AvoidFlyVehicle:",
+            "uiType": "picker",
+            "value": 2,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1138",
+            "adrSize": "u8",
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "SeatFunEn:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1115",
+            "adrSize": "u8",
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "SlopeLastTime(S):",
+            "uiType": "field",
+            "value": 0,
+            "max": "1000000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1170",
+            "adrSize": "u16"
+        }
+    ],
+    [
+        {
+            "title": "GearSpdMode:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1050",
+            "adrSize": "u8",
+            "data": [
+                "Disable",
+                "TogSpd3",
+                "SJogSpd2",
+                "SJogSpd3",
+                "SJogSpd4",
+                "SJogSpd5",
+                "DJogSpd2",
+                "DJogSpd3",
+                "DJogSpd4",
+                "DJogSpd5",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "DefaultGear:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "5",
+            "min": "0",
+            "adress": "1055",
+            "adrSize": "u8",
+            "data": [
+                "Gear1",
+                "Gear2",
+                "Gear3",
+                "Gear4",
+                "Gear5",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "Gear1Speed(rpm):",
+            "uiType": "field",
+            "value": 100,
+            "max": "32767",
+            "min": "-32767",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1016",
+            "adrSize": "u16"
+        },
+        {
+            "title": "Gear1CurPercent(%):",
+            "uiType": "field",
+            "value": 50,
+            "max": "100",
+            "min": "0",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "1014",
+            "adrSize": "u16"
+        },
+        {
+            "title": "Gear2Speed(rpm):",
+            "uiType": "field",
+            "value": 300,
+            "max": "32767",
+            "min": "-32767",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1020",
+            "adrSize": "u16"
+        },
+        {
+            "title": "Gear2CurPercent(%):",
+            "uiType": "field",
+            "value": 70,
+            "max": "100",
+            "min": "0",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "1018",
+            "adrSize": "u16"
+        },
+        {
+            "title": "Gear3Speed(rpm):",
+            "uiType": "field",
+            "value": 500,
+            "max": "32767",
+            "min": "-32767",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1136",
+            "adrSize": "i16"
+        },
+        {
+            "title": "Gear3CurPercent(%):",
+            "uiType": "field",
+            "value": 100,
+            "max": "1000",
+            "min": "-1000",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "1134",
+            "adrSize": "i16"
+        },
+        {
+            "title": "Gear4Speed(rpm):",
+            "uiType": "field",
+            "value": 0,
+            "max": "32767",
+            "min": "-32767",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1178",
+            "adrSize": "u16"
+        },
+        {
+            "title": "Gear4CurPercent(%):",
+            "uiType": "field",
+            "value": 0,
+            "max": "100",
+            "min": "0",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "1180",
+            "adrSize": "u16"
+        },
+        {
+            "title": "Gear5Speed(rpm):",
+            "uiType": "field",
+            "value": 0,
+            "max": "32767",
+            "min": "-32767",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1182",
+            "adrSize": "u16"
+        },
+        {
+            "title": "Gear5CurPercent(%):",
+            "uiType": "field",
+            "value": 0,
+            "max": "100",
+            "min": "0",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "1184",
+            "adrSize": "u16"
+        },
+        {
+            "title": "GearSLastTime(S):",
+            "uiType": "field",
+            "value": 0,
+            "max": "1000000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1128",
+            "adrSize": "u16"
+        },
+        {
+            "title": "GearSRecoTime(S):",
+            "uiType": "field",
+            "value": 0,
+            "max": "1000000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1174",
+            "adrSize": "u16"
+        },
+        {
+            "title": "RevMode:",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1062",
+            "adrSize": "u8",
+            "data": [
+                "Throttle",
+                "Button",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "RevCurPercent(%):",
+            "uiType": "field",
+            "value": 15,
+            "max": "100",
+            "min": "10",
+            "ratio_K": -10,
+            "ratio_B": 0,
+            "adress": "1030",
+            "adrSize": "i16"
+        },
+        {
+            "title": "RevSpdPercent(%):",
+            "uiType": "field",
+            "value": 10,
+            "max": "100",
+            "min": "10",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "1032",
+            "adrSize": "i16"
+        }
+    ],
+    [
+        {
+            "title": "FwPhaseCur(A):",
+            "uiType": "field",
+            "value": 0,
+            "max": "990",
+            "min": "0",
+            "ratio_K": -33.03,
+            "ratio_B": 0,
+            "adress": "616",
+            "adrSize": "i16"
+        },
+        {
+            "title": "AccFwResponse:",
+            "uiType": "field",
+            "value": 10,
+            "max": "255",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1068",
+            "adrSize": "u8"
+        },
+        {
+            "title": "DecFwResponse:",
+            "uiType": "field",
+            "value": 10,
+            "max": "255",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1080",
+            "adrSize": "u8"
+        },
+        {
+            "title": "StartTorquePara:",
+            "uiType": "field",
+            "value": 10,
+            "max": "255",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1069",
+            "adrSize": "u16"
+        },
+        {
+            "title": "AccTorquePara:",
+            "uiType": "field",
+            "value": 5,
+            "max": "255",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1083",
+            "adrSize": "u8"
+        },
+        {
+            "title": "DcCurCompPara:",
+            "uiType": "field",
+            "value": 10,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1071",
+            "adrSize": "u16"
+        },
+        {
+            "title": "EnterFwPercent(%):",
+            "uiType": "field",
+            "value": 98,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "610",
+            "adrSize": "u16"
+        },
+        {
+            "title": "ExitFwPercent(%):",
+            "uiType": "field",
+            "value": 96,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 10,
+            "ratio_B": 0,
+            "adress": "612",
+            "adrSize": "u16"
+        },
+        {
+            "title": "FwLpfPara:",
+            "uiType": "field",
+            "value": 5,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "618",
+            "adrSize": "u16"
+        },
+        {
+            "title": "FwKp:",
+            "uiType": "field",
+            "value": 0,
+            "max": "2147483647",
+            "min": "-2147483648",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "806",
+            "adrSize": "i32"
+        }
+    ],
+    [
+        {
+            "title": "SifMeterMode:",
+            "uiType": "field",
+            "value": 1,
+            "max": "255",
+            "min": "0",
+            "adress": "1082",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adrSize": "u8"
+        },
+        {
+            "title": "SifPluseT:",
+            "uiType": "field",
+            "value": 0,
+            "max": "255",
+            "min": "0",
+            "adress": "1173",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adrSize": "u8"
+        },
+        {
+            "title": "SpeedPara:",
+            "uiType": "field",
+            "value": 103,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1066",
+            "adrSize": "u16"
+        }
+    ],
+    [
+        {
+            "title": "BrakeEnterMinSpd(rpm):",
+            "uiType": "field",
+            "value": 0,
+            "max": "32767",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1176",
+            "adrSize": "u16"
+        },
+        {
+            "title": "EBSChargePhaseCur(A):",
+            "uiType": "field",
+            "value": 0,
+            "max": "300",
+            "min": "0",
+            "ratio_K": -1,
+            "ratio_B": 0,
+            "adress": "1010",
+            "adrSize": "i16"
+        },
+        {
+            "title": "EBSExitSpeed(rpm):",
+            "uiType": "field",
+            "value": 100,
+            "max": "10000",
+            "min": "100",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1078",
+            "adrSize": "i16"
+        },
+        {
+            "title": "EBSEnterSpeed(rpm):",
+            "uiType": "field",
+            "value": 150,
+            "max": "10000",
+            "min": "100",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1012  ",
+            "adrSize": "i16"
+        },
+        {
+            "title": "EBSControlMode:",
+            "uiType": "picker",
+            "value": 1,
+            "max": "2",
+            "min": "0",
+            "adress": "1077",
+            "adrSize": "u8",
+            "data": [
+                "FixedTorque",
+                "LineTorque",
+                "NoSet"
+            ]
+        }
+    ],
+    [
+        {
+            "title": "IdqMinKp:",
+            "uiType": "field",
+            "value": 8000,
+            "max": "100000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "686",
+            "adrSize": "i32"
+        },
+        {
+            "title": "IdqMinKi:",
+            "uiType": "field",
+            "value": 30,
+            "max": "100000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "690",
+            "adrSize": "i32"
+        },
+        {
+            "title": "IdqMaxKp:",
+            "uiType": "field",
+            "value": 16000,
+            "max": "100000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "726",
+            "adrSize": "i32"
+        },
+        {
+            "title": "IdqMaxKi:",
+            "uiType": "field",
+            "value": 50,
+            "max": "100000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "730",
+            "adrSize": "i32"
+        },
+        {
+            "title": "SpdLoopKp:",
+            "uiType": "field",
+            "value": 100,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "766",
+            "adrSize": "i32"
+        },
+        {
+            "title": "SpdLoopKi:",
+            "uiType": "field",
+            "value": 30,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "770",
+            "adrSize": "i32"
+        },
+        {
+            "title": "SpdLimitKp:",
+            "uiType": "field",
+            "value": 100,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "846",
+            "adrSize": "i32"
+        },
+        {
+            "title": "SpdLimitKi:",
+            "uiType": "field",
+            "value": 30,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "850",
+            "adrSize": "i32"
+        },
+        {
+            "title": "DcCurKp:",
+            "uiType": "field",
+            "value": 400,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "886",
+            "adrSize": "i32"
+        },
+        {
+            "title": "DcCurKi:",
+            "uiType": "field",
+            "value": 60,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "890",
+            "adrSize": "i32"
+        },
+        {
+            "title": "AntitheftKp:",
+            "uiType": "field",
+            "value": 3000,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1084",
+            "adrSize": "i32"
+        },
+        {
+            "title": "AntitheftKi:",
+            "uiType": "field",
+            "value": 800,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1088",
+            "adrSize": "i32"
+        },
+        {
+            "title": "SlopeKp:",
+            "uiType": "field",
+            "value": 3000,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1092",
+            "adrSize": "i32"
+        },
+        {
+            "title": "SlopeKi:",
+            "uiType": "field",
+            "value": 300,
+            "max": "10000",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1096",
+            "adrSize": "i32"
+        },
+        {
+            "title": "ShortCircuitEn:",
+            "uiType": "picker",
+            "value": 1,
+            "max": "2",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1100",
+            "adrSize": "u8",
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        }
+    ],
+    [
+        {
+            "title": "TCSEn",
+            "uiType": "picker",
+            "value": 0,
+            "max": "2",
+            "min": "0",
+            "adress": "1116",
+            "adrSize": "u8",
+            "data": [
+                "Disable",
+                "Enable",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "TCSEnterAcc:",
+            "uiType": "field",
+            "value": 150,
+            "max": 1000000,
+            "min": 0,
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": 1101,
+            "adrSize": "u32"
+        },
+        {
+            "title": "TCSExitSpd:",
+            "uiType": "field",
+            "value": 150,
+            "max": 1000000,
+            "min": 0,
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": 1105,
+            "adrSize": "u32"
+        },
+        {
+            "title": "TCSDecPhaseCur:",
+            "uiType": "field",
+            "value": 150,
+            "max": 1000000,
+            "min": 0,
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": 1109,
+            "adrSize": "u32"
+        }
+    ],
+    [
+        {
+            "title": "MotorRatedCur(Arms)",
+            "uiType": "field",
+            "value": 0,
+            "max": "300",
+            "min": "10",
+            "ratio_K": 46.71,
+            "ratio_B": 0,
+            "adress": "1149",
+            "adrSize": "i16"
+        },
+        {
+            "title": "MotorDir",
+            "uiType": "picker",
+            "value": 2,
+            "max": "1",
+            "min": "-1",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1169",
+            "adrSize": "u8",
+            "data": [
+                "Reverse",
+                "Froward",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "EncoderDir",
+            "uiType": "picker",
+            "value": 2,
+            "max": "1",
+            "min": "-1",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1151",
+            "adrSize": "u8",
+            "data": [
+                "Reverse",
+                "Froward",
+                "NoSet"
+            ]
+        },
+        {
+            "title": "RotorTimeConst",
+            "uiType": "field",
+            "value": 65535,
+            "max": "500",
+            "min": "1",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1152",
+            "adrSize": "u16"
+        },
+        {
+            "title": "NoLoadCurPercent%",
+            "uiType": "field",
+            "value": 255,
+            "max": "45",
+            "min": "15",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1154",
+            "adrSize": "u8"
+        },
+        {
+            "title": "MaxSlip(HZ)",
+            "uiType": "field",
+            "value": 65535,
+            "max": "200",
+            "min": "20",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1155",
+            "adrSize": "u16"
+        },
+        {
+            "title": "MotorMaxF(HZ)",
+            "uiType": "field",
+            "value": 65535,
+            "max": "400",
+            "min": "10",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1157",
+            "adrSize": "u16"
+        },
+        {
+            "title": "MotorNormalF(HZ)",
+            "uiType": "field",
+            "value": 65535,
+            "max": "200",
+            "min": "20",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1159",
+            "adrSize": "u16"
+        },
+        {
+            "title": "MotorNormalSpd(rpm)",
+            "uiType": "field",
+            "value": 65535,
+            "max": "6000",
+            "min": "100",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1161",
+            "adrSize": "u16"
+        },
+        {
+            "title": "MinFieldCur(A)",
+            "uiType": "field",
+            "value": 0,
+            "max": "50",
+            "min": "1",
+            "ratio_K": 33.03,
+            "ratio_B": 0,
+            "adress": "1163",
+            "adrSize": "i16"
+        },
+        {
+            "title": "OffThrotleDcCur(A)",
+            "uiType": "field",
+            "value": 1,
+            "max": "150",
+            "min": "0",
+            "ratio_K": -1,
+            "ratio_B": 0,
+            "adress": "1165",
+            "adrSize": "i16"
+        },
+        {
+            "title": "OffThrotlePhasehCur(A)",
+            "uiType": "field",
+            "value": 0,
+            "max": "200",
+            "min": "0",
+            "ratio_K": -33.03,
+            "ratio_B": 0,
+            "adress": "1167",
+            "adrSize": "i16"
+        }
+    ],
+    [
+        {
+            "title": "VectorDir:",
+            "uiType": "field",
+            "value": -1,
+            "max": "1",
+            "min": "-1",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1054",
+            "adrSize": "i8",
+            "disable": true
+        },
+        {
+            "title": "MotorDir:",
+            "uiType": "field",
+            "value": 0,
+            "max": "1",
+            "min": "-1",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1053",
+            "adrSize": "i8",
+            "disable": true
+        },
+        {
+            "title": "PhaseCurClai1:",
+            "uiType": "field",
+            "value": 1525,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "930",
+            "adrSize": "u16",
+            "disable": true
+        },
+        {
+            "title": "PhaseCurClai2:",
+            "uiType": "field",
+            "value": 1512,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "932",
+            "adrSize": "u16",
+            "disable": true
+        },
+        {
+            "title": "DcCurClai:",
+            "uiType": "field",
+            "value": 682,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "934",
+            "adrSize": "u16",
+            "disable": true
+        },
+        {
+            "title": "ManuFMaxPhaseCur:",
+            "uiType": "field",
+            "value": 300,
+            "max": "32768",
+            "min": "-32767",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1139",
+            "adrSize": "i16"
+        },
+        {
+            "title": "ManuFMaxDcCur:",
+            "uiType": "field",
+            "value": -1,
+            "max": "32768",
+            "min": "-32767",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1141",
+            "adrSize": "i16"
+        },
+        {
+            "title": "ManuFCANID(Tx):",
+            "uiType": "field",
+            "value": 65535,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1143",
+            "adrSize": "u16"
+        },
+        {
+            "title": "ManuFCANID(Rx):",
+            "uiType": "field",
+            "value": 65535,
+            "max": "65535",
+            "min": "0",
+            "ratio_K": 1,
+            "ratio_B": 0,
+            "adress": "1145",
+            "adrSize": "u16"
+        }
+    ]
+]
