@@ -365,3 +365,100 @@ Exit codes:
 | 3 | DTS file could not be loaded |
 | 4 | COM port could not be opened |
 | 5 | One or more parameter reads failed |
+
+## Live data-monitor protocol
+
+`doc/screen_shot_live.pcapng` records the Windows application's continuously updating Data Monitor screen. The related artifacts are:
+
+- `doc/DataMonitor.cs` - approximate C# view model
+- `doc/DataMonitor.jpg` - example UI
+- `doc/DataMonitor.json` - incomplete placeholder JSON
+
+The capture contains 184 polling requests and 184 matching responses over approximately 25.6 seconds, giving an update rate of about 7.2 polls per second. The CH343 has USB address 4 in this capture.
+
+This monitor uses the older `7E` batch-read protocol, not the `5A A5` single-register protocol used by `conReadWrite.pcapng`.
+
+### Batch-read request
+
+Every request is 84 bytes:
+
+```text
+7E 00 02 02 4B 10
+[25 address-low, address-high, size descriptors]
+CHECKSUM_LO CHECKSUM_HI
+0D
+```
+
+The 25 descriptors request a total of 36 data bytes. Each descriptor contains a 16-bit little-endian address followed by a one-byte size.
+
+### Batch-read response
+
+Every response is 45 bytes:
+
+```text
+7E 00 02 82 24 A0
+[36 returned data bytes]
+CHECKSUM_LO CHECKSUM_HI
+0D
+```
+
+Returned values appear in the same order and with the same sizes as the request descriptors.
+
+### Batch checksum
+
+The `7E` protocol does not use CRC-16/CCITT-FALSE. Its 16-bit checksum is the two's complement of the byte sum:
+
+```text
+checksum = -sum(bytes from frame index 1 through the final data byte) mod 65536
+```
+
+The checksum is transmitted little-endian. The leading `7E`, checksum bytes, and trailing `0D` are excluded from the sum.
+
+### Live field mapping
+
+| Address | Size | Data Monitor field | Confirmed or likely conversion |
+|---:|---:|---|---|
+| 57 | 1 | `driveState` | State/flags; values 0, 2 and 4 observed |
+| 245 | 1 | `runningState` | Raw state value |
+| 192 | 1 | `vehicleGear` | Raw state value |
+| 203 | 1 | `vehicleMode` | Raw state value |
+| 105 | 2 | `MotorSpd` | Signed little-endian RPM |
+| 239 | 4 | `FaultCode` | 32-bit fault code or bitmap |
+| 119 | 2 | `DcCurrent` | Signed raw value divided by 10 A |
+| 113 | 2 | `DcVoltage` | Unsigned raw value divided by 10 V |
+| 224 | 2 | `PhaseCurrent` | Signed; exact scaling remains unconfirmed |
+| 115 | 2 | `MotorPower` | Signed; exact kW scaling remains unconfirmed |
+| 220 | 2 | `ThrottleVoltage` | Raw value divided by approximately 744.73 V |
+| 222 | 1 | `MCUTemperature` | Raw value minus 40 degrees C |
+| 223 | 1 | `MotorTemperature` | Raw value minus 40 degrees C |
+| 90 | 1 | `HallValue` | Raw Hall state |
+| 1130 | 2 | `P1` | Unsigned little-endian value |
+| 1132 | 2 | `P2` | Unsigned little-endian value |
+| 232 | 1 | `Brake` | Boolean/function state |
+| 233 | 1 | `AntiTheft` | Boolean/function state |
+| 234 | 1 | `Park` | Boolean/function state |
+| 235 | 1 | `Cruise` | Boolean/function state |
+| 236 | 1 | `Reverse` | Boolean/function state |
+| 237 | 1 | `SideStand` | Boolean/function state |
+| 238 | 1 | `BOOST` | Boolean/function state |
+| 243 | 1 | `AccGear` | Boolean/function state |
+| 244 | 1 | `DecGear` | Boolean/function state |
+
+Examples that directly match the displayed units include:
+
+```text
+FF FE = -2  -> -0.2 A DC current
+01 E1 = 481 -> 48.1 V DC voltage
+02 3A = 570 -> approximately 0.8 V throttle input
+4B = 75     -> 35 degrees C MCU temperature
+05 02       -> P1 value 1282
+```
+
+### DataMonitor model limitations
+
+- `DriveState.Read` is probably a misspelling of `Ready`.
+- Address 57 produces raw values 0, 2 and 4, so the existing `DriveState` enum is incomplete or the byte is a bit field.
+- `FaultCode` is declared as `short`, but the live request and response allocate four bytes; it should likely be `uint` or `int`.
+- Current, voltage, throttle and temperature properties require scaling rather than direct `short` display.
+- The screenshot is not an exact frame from this capture: its displayed state combination and motor temperature do not occur exactly in the recorded responses.
+- `DataMonitor.json` currently contains null placeholders and does not describe addresses, sizes, scaling or live values.

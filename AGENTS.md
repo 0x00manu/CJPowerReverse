@@ -251,3 +251,97 @@ Build and test:
 dotnet build .\CJPowerReverse.slnx --configuration Release
 dotnet run --project .\tests\CJPowerReverse.Protocol.Tests --configuration Release --no-build
 ```
+
+## `doc/screen_shot_live.pcapng` analysis
+
+This capture records the on-the-fly Data Monitor exchange represented approximately by `doc/DataMonitor.cs` and visually by `doc/DataMonitor.jpg`.
+
+Capture identity and metadata:
+
+```text
+SHA-256: c664cf00b0040c2129db8eb3dd6935497276e8a3d2267ad81d7257a2863faa4a
+Packets: 760
+File size: 71 kB
+Captured packet data: 46 kB
+Duration: 25.586098 seconds
+USB address: 4
+```
+
+There are 184 data-bearing bulk-OUT packets of 84 bytes and 184 data-bearing bulk-IN packets of 45 bytes. The effective polling rate is about 7.2 Hz. Each OUT transfer has a corresponding IN response.
+
+### Live batch-read request
+
+All 184 requests are identical:
+
+```text
+7E 00 02 02 4B 10
+39 00 01  F5 00 01  C0 00 01  CB 00 01  69 00 02
+EF 00 04  77 00 02  71 00 02  E0 00 02  73 00 02
+DC 00 02  DE 00 01  DF 00 01  5A 00 01  6A 04 02
+6C 04 02  E8 00 01  E9 00 01  EA 00 01  EB 00 01
+EC 00 01  ED 00 01  EE 00 01  F3 00 01  F4 00 01
+0C ED 0D
+```
+
+After the six-byte prefix, the request contains 25 triples of `address_lo address_hi size`. Addresses are unflagged 16-bit little-endian values. The descriptor sizes sum to 36 bytes. Byte `0x4B` equals the 75-byte descriptor block length.
+
+### Live batch-read response
+
+Responses have this layout:
+
+```text
+Offset  Size  Meaning
+0       1     0x7E header
+1-3     3     00 02 82 response prefix
+4       1     0x24, returned-data length (36)
+5       1     0xA0 response/subcommand byte
+6-41    36    values in request-descriptor order
+42-43   2     little-endian checksum
+44      1     0x0D terminator
+```
+
+### `7E` checksum
+
+The checksum is not CRC-16. For both requests and responses:
+
+```text
+checksum = (-sum(frame[1] through final_data_byte)) & 0xFFFF
+```
+
+Transmit the result little-endian. Exclude the leading `0x7E`, the two checksum bytes, and trailing `0x0D`. This rule matches the request checksum `0C ED` and observed response checksums such as `F9 FA`.
+
+### Response data offsets and model mapping
+
+Offsets below are relative to the 36-byte data block beginning at absolute response byte 6:
+
+| Data offset | Address | Size | Model field | Interpretation |
+|---:|---:|---:|---|---|
+| 0 | 57 | 1 | `driveState` | Values 0, 2, 4 observed; likely flags/incomplete enum |
+| 1 | 245 | 1 | `runningState` | Raw state |
+| 2 | 192 | 1 | `vehicleGear` | Raw state |
+| 3 | 203 | 1 | `vehicleMode` | Raw state |
+| 4 | 105 | 2 | `MotorSpd` | Signed LE RPM; observed 0-865 |
+| 6 | 239 | 4 | `FaultCode` | 32-bit LE; always zero in capture |
+| 10 | 119 | 2 | `DcCurrent` | Signed LE divided by 10 A; observed raw -2 to 5 |
+| 12 | 113 | 2 | `DcVoltage` | Unsigned LE divided by 10 V; raw 473-481 |
+| 14 | 224 | 2 | `PhaseCurrent` | Signed LE; observed raw 0-199, scaling unconfirmed |
+| 16 | 115 | 2 | `MotorPower` | Signed LE; zero throughout capture, scaling unconfirmed |
+| 18 | 220 | 2 | `ThrottleVoltage` | Unsigned LE / 744.73 V; raw 568-948 |
+| 20 | 222 | 1 | `MCUTemperature` | Raw - 40 degrees C; raw 75 => 35 degrees C |
+| 21 | 223 | 1 | `MotorTemperature` | Raw - 40 degrees C; raw 78 => 38 degrees C |
+| 22 | 90 | 1 | `HallValue` | Values 1-6 observed |
+| 23 | 1130 | 2 | `P1` | Unsigned LE; fixed at 1282 (`02 05`) |
+| 25 | 1132 | 2 | `P2` | Unsigned LE; fixed at zero |
+| 27-35 | 232-238, 243-244 | 1 each | Function keys | All zero in this capture |
+
+Function key order is Brake, AntiTheft, Park, Cruise, Reverse, SideStand, BOOST, AccGear, DecGear.
+
+### Evidence boundaries and model corrections
+
+- The request order strongly supports the `DataMonitor.cs` property order, but the class is only an approximate model.
+- `DriveState.Read` likely means `Ready`, but do not silently rename it in protocol code without preserving the raw value.
+- Address 57 cannot be represented by the current enum because raw value 4 occurs in 87 responses. Prefer a raw byte or flags type until controlled tests identify the bits.
+- `FaultCode` must accommodate four bytes; `short` is inconsistent with the capture.
+- The screenshot shows Ready/MTPA/Gear2/Running and 37 degrees C motor temperature, but no captured response contains that exact state tuple; captured motor temperature is consistently raw 78, or 38 degrees C with the confirmed offset.
+- `doc/DataMonitor.json` is currently only a placeholder. Its top-level syntax must be valid JSON, and null objects alone do not encode the live protocol mapping.
+- The existing HWTest implements only the confirmed `5A A5` register-read protocol. Do not assume it can request or parse this `7E` batch-monitor exchange until a separate codec is implemented and tested.
