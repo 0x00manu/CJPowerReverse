@@ -462,3 +462,32 @@ FF FE = -2  -> -0.2 A DC current
 - Current, voltage, throttle and temperature properties require scaling rather than direct `short` display.
 - The screenshot is not an exact frame from this capture: its displayed state combination and motor temperature do not occur exactly in the recorded responses.
 - `DataMonitor.json` currently contains null placeholders and does not describe addresses, sizes, scaling or live values.
+## ESP8266 data monitor
+
+`ESP8266-data-monitor` is a PlatformIO/Arduino firmware project that implements the captured `7E` live batch-monitor protocol on an ESP8266.
+
+The firmware:
+
+- Uses hardware UART0 at 115200 8N1 for the motor controller.
+- Uses UART1 TX on GPIO2 for optional diagnostic output.
+- Sends the exact captured 84-byte, 25-address batch-read request.
+- Parses fragmented 45-byte responses without blocking the web server.
+- Validates the two's-complement checksum before publishing data.
+- Polls approximately every 150 ms, with timeout and retry handling.
+- Tracks requests, valid responses, checksum errors, malformed frames, timeouts and discarded bytes.
+- Runs a WPA2 access point named `CJPowerMonitor`.
+- Serves a responsive live dashboard at `http://192.168.4.1/`.
+- Provides JSON endpoints at `/api/live` and `/api/status`.
+- Contains no write, commit, reset or undocumented controller commands.
+
+Build it with:
+
+```powershell
+python -m platformio run -d .\ESP8266-data-monitor -e nodemcuv2
+```
+
+The confirmed build uses Espressif8266 platform 4.2.1 and Arduino core 3.1.2. Current resource usage is approximately 28,840 bytes of RAM (35.2%) and 307,783 bytes of application flash (29.5% of the configured application region).
+
+Protocol unit tests are under `ESP8266-data-monitor/test/test_monitor_protocol`. Running them with PlatformIO's `native` environment requires a native C/C++ compiler such as GCC or Clang on `PATH`. The present machine does not have one installed, so native test execution is pending; the ESP8266 production target itself compiles successfully.
+
+See `ESP8266-data-monitor/README.md` for wiring, build, upload, access-point credentials and startup-byte safety notes.

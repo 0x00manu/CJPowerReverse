@@ -345,3 +345,45 @@ Function key order is Brake, AntiTheft, Park, Cruise, Reverse, SideStand, BOOST,
 - The screenshot shows Ready/MTPA/Gear2/Running and 37 degrees C motor temperature, but no captured response contains that exact state tuple; captured motor temperature is consistently raw 78, or 38 degrees C with the confirmed offset.
 - `doc/DataMonitor.json` is currently only a placeholder. Its top-level syntax must be valid JSON, and null objects alone do not encode the live protocol mapping.
 - The existing HWTest implements only the confirmed `5A A5` register-read protocol. Do not assume it can request or parse this `7E` batch-monitor exchange until a separate codec is implemented and tested.
+
+## ESP8266 live-monitor implementation
+
+`ESP8266-data-monitor` is a PlatformIO project targeting `nodemcuv2` with the Arduino framework. It implements only the read-only `7E` live-monitor exchange.
+
+Architecture:
+
+- Hardware UART0 on GPIO1 TX/GPIO3 RX communicates with the controller at 115200 8N1.
+- UART1 TX on GPIO2 carries optional diagnostics; never print diagnostics to UART0.
+- `MonitorProtocol.cpp` owns request generation, checksum validation, stream resynchronization and response decoding.
+- `MonitorData.h` preserves uncertain states and scaling as raw values alongside confirmed conversion helpers.
+- `main.cpp` runs a non-blocking poll/timeout/retry state machine and the built-in `ESP8266WebServer`.
+- `DashboardPage.h` embeds the read-only browser dashboard in flash; no filesystem upload is required.
+- The AP defaults are SSID `CJPowerMonitor`, WPA2 password `CJPower123`, and IP `192.168.4.1`.
+- `/api/live` returns the latest snapshot and communication counters; `/api/status` returns firmware/AP status.
+
+Safety boundaries:
+
+- The firmware contains the single captured 84-byte batch-read request only.
+- It has no register-write, commit, reset or unconfirmed-command implementation.
+- UART0 emits ESP8266 boot ROM bytes during reset. Isolate controller RX if unsolicited startup bytes could be unsafe.
+- Verify controller logic level before wiring; ESP8266 GPIO is not 5 V tolerant.
+
+Verification status:
+
+```text
+Target: NodeMCU 1.0 / ESP-12E
+Platform: Espressif8266 4.2.1
+Arduino core: 3.1.2
+Build: successful
+RAM: 28,840 / 81,920 bytes (35.2%)
+Flash: 307,783 / 1,044,464 bytes (29.5%)
+```
+
+Golden-vector Unity tests cover request bytes/checksum, captured-response decoding, checksum rejection, fragmentation and noise resynchronization. Native test execution currently cannot run because no host `gcc`, `g++`, `clang`, or MSVC compiler is on `PATH`; do not report these tests as executed until that dependency exists. The ESP8266 firmware target compiles successfully with the same protocol source.
+
+Commands:
+
+```powershell
+python -m platformio run -d .\ESP8266-data-monitor -e nodemcuv2
+python -m platformio test -d .\ESP8266-data-monitor -e native
+```
