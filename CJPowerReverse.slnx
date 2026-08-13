@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/CJPowerReverse.Protocol.Tests/CJPowerReverse.Protocol.Tests.csproj" />
+    <Project Path="tests/DashboardTest/DashboardTest.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/CJPowerReverse.HWTest/CJPowerReverse.HWTest.csproj" />

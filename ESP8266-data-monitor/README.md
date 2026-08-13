@@ -42,4 +42,13 @@ python -m platformio run -d .\ESP8266-data-monitor -t upload --upload-port COM5
 
 The firmware polls the captured 25-field batch request every 150 ms. It validates the response checksum, maintains communication statistics, and exposes `/api/live` and `/api/status` JSON endpoints.
 
+At startup it first reproduces the read-only protocol-verification sequence from
+`doc/HandShake.pcapng`: six captured `7E` probes followed by the `5A A5` identity
+read for address 5. A valid identity (captured example `B1.T2.009-031A`) is shown
+in `/api/status` and on diagnostic UART1. The firmware then begins the confirmed
+`7E` live batch polling. No write, commit, or reset command is sent.
+
+The identity response has `LEN=0x10`: this counts the two encoded-address bytes
+plus the 14-character identity, rather than returning 16 identity bytes.
+
 The firmware is deliberately read-only. It contains no parameter-write, commit, reset, or undocumented command implementation.

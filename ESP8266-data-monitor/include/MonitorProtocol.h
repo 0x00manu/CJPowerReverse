@@ -13,6 +13,9 @@ constexpr size_t kRequestSize = 84;
 constexpr size_t kResponseSize = 45;
 constexpr size_t kResponseDataSize = 36;
 constexpr size_t kMaximumFrameSize = 96;
+constexpr size_t kIdentificationRequestSize = 10;
+constexpr size_t kIdentificationResponseSize = 23;
+constexpr size_t kVerificationProbeCount = 6;
 
 enum class ParseResult : uint8_t {
     None,
@@ -23,6 +26,9 @@ enum class ParseResult : uint8_t {
 
 uint16_t computeChecksum(const uint8_t* frame, size_t dataEndExclusive);
 void buildBatchReadRequest(uint8_t (&output)[kRequestSize]);
+const uint8_t* verificationProbe(size_t index, size_t& length);
+void buildIdentificationRequest(uint8_t (&output)[kIdentificationRequestSize]);
+bool decodeIdentification(const uint8_t* frame, size_t length, char* output, size_t outputSize);
 bool validateFrame(const uint8_t* frame, size_t length);
 bool decodeResponse(const uint8_t* frame, size_t length, MonitorData& output);
 

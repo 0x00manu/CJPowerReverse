@@ -25,6 +25,41 @@ bool waitingForResponse = false;
 uint8_t currentAttempt = 0;
 uint32_t requestTimeMs = 0;
 uint32_t nextPollTimeMs = 0;
+char controllerIdentity[17] = "unconfirmed";
+bool handshakeComplete = false;
+
+bool performProtocolVerification() {
+    constexpr uint16_t delaysMs[] = {500, 70, 70, 70, 70, 500};
+    for (size_t index = 0; index < monitor_protocol::kVerificationProbeCount; ++index) {
+        size_t length = 0;
+        const uint8_t* probe = monitor_protocol::verificationProbe(index, length);
+        if (probe == nullptr || length == 0) {
+            return false;
+        }
+        Serial.write(probe, length);
+        Serial.flush();
+        delay(delaysMs[index]);
+    }
+
+    while (Serial.available() > 0) { Serial.read(); }
+    uint8_t identificationRequest[monitor_protocol::kIdentificationRequestSize]{};
+    monitor_protocol::buildIdentificationRequest(identificationRequest);
+    Serial.write(identificationRequest, sizeof(identificationRequest));
+    Serial.flush();
+
+    uint8_t response[monitor_protocol::kIdentificationResponseSize]{};
+    size_t count = 0;
+    const uint32_t deadline = millis() + 750;
+    while (static_cast<int32_t>(millis() - deadline) < 0 && count < sizeof(response)) {
+        if (Serial.available() <= 0) { yield(); continue; }
+        const uint8_t value = static_cast<uint8_t>(Serial.read());
+        if (count == 0 && value != 0x5A) { continue; }
+        if (count == 1 && value != 0xA5) { count = 0; continue; }
+        response[count++] = value;
+    }
+    return monitor_protocol::decodeIdentification(
+        response, count, controllerIdentity, sizeof(controllerIdentity));
+}
 
 void writeJsonBoolean(String& json, const __FlashStringHelper* name, bool value) {
     json += '"';
@@ -86,6 +121,8 @@ void handleStatus() {
     String json;
     json.reserve(400);
     json += F("{\"firmware\":\"CJPower ESP8266 Data Monitor\",\"readOnly\":true,");
+    json += F("\"handshakeComplete\":"); json += handshakeComplete ? F("true") : F("false");
+    json += F(",\"controllerIdentity\":\""); json += controllerIdentity; json += F("\",");
     json += F("\"baudRate\":115200,\"pollIntervalMs\":150,\"responseTimeoutMs\":220,");
     json += F("\"apIp\":\""); json += WiFi.softAPIP().toString();
     json += F("\",\"clients\":"); json += WiFi.softAPgetStationNum();
@@ -159,6 +196,7 @@ void setup() {
     }
 
     monitor_protocol::buildBatchReadRequest(request);
+    handshakeComplete = performProtocolVerification();
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(kAccessPointName, kAccessPointPassword);
@@ -175,6 +213,8 @@ void setup() {
     Serial1.println(F("CJPower read-only data monitor"));
     Serial1.print(F("AP: ")); Serial1.println(kAccessPointName);
     Serial1.print(F("IP: ")); Serial1.println(WiFi.softAPIP());
+    Serial1.print(F("Handshake: ")); Serial1.println(handshakeComplete ? F("verified") : F("no identification response"));
+    Serial1.print(F("Controller: ")); Serial1.println(controllerIdentity);
     nextPollTimeMs = millis();
 }
 

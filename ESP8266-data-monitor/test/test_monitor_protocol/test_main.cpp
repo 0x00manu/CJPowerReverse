@@ -57,6 +57,16 @@ void testFragmentedStreamAndNoise() {
     TEST_ASSERT_EQUAL_UINT16(481, data.dcVoltageRaw);
 }
 
+void testIdentificationResponseDecodes() {
+    constexpr uint8_t response[] = {
+        0x5A, 0xA5, 0x10, 0x05, 0x80, 0x42, 0x31, 0x2E, 0x54, 0x32, 0x2E,
+        0x30, 0x30, 0x39, 0x2D, 0x30, 0x33, 0x31, 0x41, 0x83, 0xA3, 0x0D, 0x0A
+    };
+    char identity[17]{};
+    TEST_ASSERT_TRUE(monitor_protocol::decodeIdentification(response, sizeof(response), identity, sizeof(identity)));
+    TEST_ASSERT_EQUAL_STRING("B1.T2.009-031A", identity);
+}
+
 }  // namespace
 
 int main(int, char**) {
@@ -65,5 +75,6 @@ int main(int, char**) {
     RUN_TEST(testCapturedResponseDecodes);
     RUN_TEST(testChecksumDamageIsRejected);
     RUN_TEST(testFragmentedStreamAndNoise);
+    RUN_TEST(testIdentificationResponseDecodes);
     return UNITY_END();
 }

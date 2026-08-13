@@ -18,6 +18,11 @@ constexpr uint8_t kDescriptors[] = {
     0xF4, 0x00, 0x01
 };
 
+constexpr uint8_t kProbe0[] = {0x7E, 0x00, 0x02, 0x08, 0x04, 0xC0, 0x90, 0x00, 0x20, 0x00, 0x82, 0xFE, 0x0D};
+constexpr uint8_t kProbe1[] = {0x7E, 0x00, 0x03, 0x01, 0x02, 0xE0, 0xC0, 0xC0, 0x9A, 0xFD, 0x0D};
+constexpr uint8_t kProbe5[] = {0x7E, 0x00, 0x03, 0x02, 0x04, 0xC0, 0x30, 0x00, 0x20, 0x00, 0xE7, 0xFE, 0x0D};
+constexpr uint8_t kIdentificationRequest[] = {0x5A, 0xA5, 0x03, 0x05, 0x80, 0x10, 0xC5, 0x2E, 0x0D, 0x0A};
+
 static_assert(sizeof(kRequestPrefix) + sizeof(kDescriptors) + 3 == kRequestSize,
               "Captured request size changed");
 
@@ -35,6 +40,19 @@ uint32_t readU32(const uint8_t* value) {
            (static_cast<uint32_t>(value[1]) << 8U) |
            (static_cast<uint32_t>(value[2]) << 16U) |
            (static_cast<uint32_t>(value[3]) << 24U);
+}
+
+uint16_t computeCrc(const uint8_t* data, size_t length) {
+    uint16_t crc = 0xFFFF;
+    for (size_t index = 0; index < length; ++index) {
+        crc ^= static_cast<uint16_t>(data[index]) << 8U;
+        for (uint8_t bit = 0; bit < 8; ++bit) {
+            crc = (crc & 0x8000U) != 0
+                ? static_cast<uint16_t>((crc << 1U) ^ 0x1021U)
+                : static_cast<uint16_t>(crc << 1U);
+        }
+    }
+    return crc;
 }
 
 }  // namespace
@@ -56,6 +74,35 @@ void buildBatchReadRequest(uint8_t (&output)[kRequestSize]) {
     output[checksumOffset] = static_cast<uint8_t>(checksum & 0xFFU);
     output[checksumOffset + 1] = static_cast<uint8_t>(checksum >> 8U);
     output[kRequestSize - 1] = kTerminator;
+}
+
+const uint8_t* verificationProbe(size_t index, size_t& length) {
+    if (index == 0) { length = sizeof(kProbe0); return kProbe0; }
+    if (index >= 1 && index <= 4) { length = sizeof(kProbe1); return kProbe1; }
+    if (index == 5) { length = sizeof(kProbe5); return kProbe5; }
+    length = 0;
+    return nullptr;
+}
+
+void buildIdentificationRequest(uint8_t (&output)[kIdentificationRequestSize]) {
+    memcpy(output, kIdentificationRequest, sizeof(kIdentificationRequest));
+}
+
+bool decodeIdentification(const uint8_t* frame, size_t length, char* output, size_t outputSize) {
+    constexpr size_t kIdentitySize = 14;
+    if (frame == nullptr || output == nullptr || outputSize < kIdentitySize + 1 ||
+        length != kIdentificationResponseSize || frame[0] != 0x5A || frame[1] != 0xA5 ||
+        frame[2] != 0x10 || frame[3] != 0x05 || frame[4] != 0x80 ||
+        frame[21] != 0x0D || frame[22] != 0x0A) {
+        return false;
+    }
+    const uint16_t expected = computeCrc(frame + 3, 18);
+    if (readU16(frame + 19) != expected) {
+        return false;
+    }
+    memcpy(output, frame + 5, kIdentitySize);
+    output[kIdentitySize] = '\0';
+    return true;
 }
 
 bool validateFrame(const uint8_t* frame, size_t length) {
