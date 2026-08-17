@@ -50,5 +50,17 @@ in `/api/status` and on diagnostic UART1. The firmware then begins the confirmed
 
 The identity response has `LEN=0x10`: this counts the two encoded-address bytes
 plus the 14-character identity, rather than returning 16 identity bytes.
+CRC-16/CCITT-FALSE covers exactly those 16 bytes beginning with the encoded
+address; it excludes the CRC and `0D 0A` terminator.
+
+Live polling is strictly gated by the handshake. Each identification response is
+allowed up to 5 seconds. If the handshake fails, the firmware sends no dashboard
+batch reads, waits 5 seconds after the failed attempt, and repeats the complete
+verification sequence. `/api/status` exposes the handshake state, attempt count,
+timeout, retry interval, and validated controller identity.
+
+The web dashboard displays a dedicated handshake banner. It remains amber and
+states that live polling is disabled while verification is pending, then changes
+to green and shows the validated controller identity after success.
 
 The firmware is deliberately read-only. It contains no parameter-write, commit, reset, or undocumented command implementation.

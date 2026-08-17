@@ -7,6 +7,8 @@
     <Project Path="tests/DashboardTest/DashboardTest.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="tools/CJPowerReverse.DeviceSimulator/CJPowerReverse.DeviceSimulator.csproj" />
     <Project Path="tools/CJPowerReverse.HWTest/CJPowerReverse.HWTest.csproj" />
+    <Project Path="tools/Emulator/Emulator.csproj" />
   </Folder>
 </Solution>

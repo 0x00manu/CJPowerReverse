@@ -3,11 +3,15 @@
 #include <stdint.h>
 
 struct MonitorData {
+    // Keep state bytes raw: captures contain values not represented by the
+    // reverse-engineered Windows enums (for example driveStateRaw == 4).
     uint8_t driveStateRaw = 0;
     uint8_t runningStateRaw = 0;
     uint8_t vehicleGearRaw = 0;
     uint8_t vehicleModeRaw = 0;
 
+    // Integer layout and signedness follow the captured descriptor sizes.
+    // Fields with unconfirmed engineering-unit scaling retain a Raw suffix.
     int16_t motorSpeedRpm = 0;
     uint32_t faultCode = 0;
     int16_t dcCurrentRaw = 0;
@@ -34,6 +38,7 @@ struct MonitorData {
     uint32_t updateTimeMs = 0;
     bool valid = false;
 
+    // Only conversions confirmed by capture/UI correlation are exposed here.
     float dcCurrentA() const { return static_cast<float>(dcCurrentRaw) / 10.0F; }
     float dcVoltageV() const { return static_cast<float>(dcVoltageRaw) / 10.0F; }
     float throttleVoltageV() const { return static_cast<float>(throttleVoltageRaw) / 744.73F; }
@@ -42,6 +47,7 @@ struct MonitorData {
 };
 
 struct CommunicationStats {
+    // Monotonic counters are surfaced through both JSON endpoints for diagnosis.
     uint32_t requests = 0;
     uint32_t validResponses = 0;
     uint32_t checksumErrors = 0;

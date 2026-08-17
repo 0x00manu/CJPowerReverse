@@ -491,3 +491,14 @@ The confirmed build uses Espressif8266 platform 4.2.1 and Arduino core 3.1.2. Cu
 Protocol unit tests are under `ESP8266-data-monitor/test/test_monitor_protocol`. Running them with PlatformIO's `native` environment requires a native C/C++ compiler such as GCC or Clang on `PATH`. The present machine does not have one installed, so native test execution is pending; the ESP8266 production target itself compiles successfully.
 
 See `ESP8266-data-monitor/README.md` for wiring, build, upload, access-point credentials and startup-byte safety notes.
+#   How to Test #
+##  ESP Test
+*   dotnet run --project .\tools\Emulator COM7
+*   Where COM7 is ESP8266
+##  Simulation
+*   dotnet run --project .\tools\Emulator COM11
+*   dotnet run --project .\tests\DashboardTest COM12
+*   COM11 and COM12 are virtual.
+##  Actual test
+*   DashboardTest with actual controller passed
+*   ESP8266 with actual controller failed.

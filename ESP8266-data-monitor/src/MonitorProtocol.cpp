@@ -5,6 +5,8 @@
 namespace monitor_protocol {
 namespace {
 
+// Exact request bytes recovered from screen_shot_live.pcapng. Each descriptor is
+// address-low, address-high, size; the 25 sizes total 36 response-data bytes.
 constexpr uint8_t kRequestPrefix[] = {0x7E, 0x00, 0x02, 0x02, 0x4B, 0x10};
 constexpr uint8_t kDescriptors[] = {
     0x39, 0x00, 0x01,  0xF5, 0x00, 0x01,  0xC0, 0x00, 0x01,
@@ -18,6 +20,8 @@ constexpr uint8_t kDescriptors[] = {
     0xF4, 0x00, 0x01
 };
 
+// Exact protocol-verification frames recovered from HandShake.pcapng. Their
+// detailed semantics remain unknown, so do not synthesize or alter their fields.
 constexpr uint8_t kProbe0[] = {0x7E, 0x00, 0x02, 0x08, 0x04, 0xC0, 0x90, 0x00, 0x20, 0x00, 0x82, 0xFE, 0x0D};
 constexpr uint8_t kProbe1[] = {0x7E, 0x00, 0x03, 0x01, 0x02, 0xE0, 0xC0, 0xC0, 0x9A, 0xFD, 0x0D};
 constexpr uint8_t kProbe5[] = {0x7E, 0x00, 0x03, 0x02, 0x04, 0xC0, 0x30, 0x00, 0x20, 0x00, 0xE7, 0xFE, 0x0D};
@@ -43,6 +47,8 @@ uint32_t readU32(const uint8_t* value) {
 }
 
 uint16_t computeCrc(const uint8_t* data, size_t length) {
+    // CRC-16/CCITT-FALSE used only by 5A A5 frames: poly 0x1021, init 0xFFFF,
+    // no reflection, no final XOR. CRC bytes are transmitted little-endian.
     uint16_t crc = 0xFFFF;
     for (size_t index = 0; index < length; ++index) {
         crc ^= static_cast<uint16_t>(data[index]) << 8U;
@@ -58,6 +64,8 @@ uint16_t computeCrc(const uint8_t* data, size_t length) {
 }  // namespace
 
 uint16_t computeChecksum(const uint8_t* frame, size_t dataEndExclusive) {
+    // 7E frames use a two's-complement byte sum, not CRC. Skip the 7E header;
+    // dataEndExclusive points at the first checksum byte.
     uint16_t sum = 0;
     for (size_t index = 1; index < dataEndExclusive; ++index) {
         sum = static_cast<uint16_t>(sum + frame[index]);
@@ -89,6 +97,8 @@ void buildIdentificationRequest(uint8_t (&output)[kIdentificationRequestSize]) {
 }
 
 bool decodeIdentification(const uint8_t* frame, size_t length, char* output, size_t outputSize) {
+    // Captured response: LEN=16 consists of address 0x8005 plus a 14-byte ASCII
+    // identity. The complete frame is therefore 23 bytes including framing.
     constexpr size_t kIdentitySize = 14;
     if (frame == nullptr || output == nullptr || outputSize < kIdentitySize + 1 ||
         length != kIdentificationResponseSize || frame[0] != 0x5A || frame[1] != 0xA5 ||
@@ -96,7 +106,9 @@ bool decodeIdentification(const uint8_t* frame, size_t length, char* output, siz
         frame[21] != 0x0D || frame[22] != 0x0A) {
         return false;
     }
-    const uint16_t expected = computeCrc(frame + 3, 18);
+    // LEN counts the encoded address and identity body. CRC bytes begin at
+    // frame[3 + LEN] and must not be included in the CRC calculation.
+    const uint16_t expected = computeCrc(frame + 3, frame[2]);
     if (readU16(frame + 19) != expected) {
         return false;
     }
@@ -111,6 +123,8 @@ bool validateFrame(const uint8_t* frame, size_t length) {
         return false;
     }
 
+    // A 7E response has six prefix bytes, payload length frame[4], two checksum
+    // bytes and one terminator: payload length + 9 bytes total.
     const size_t expectedLength = static_cast<size_t>(frame[4]) + 9U;
     if (length != expectedLength) {
         return false;
@@ -129,6 +143,8 @@ bool decodeResponse(const uint8_t* frame, size_t length, MonitorData& output) {
         return false;
     }
 
+    // Values are concatenated in the same order as kDescriptors. Multibyte
+    // integers are little-endian; signed values use two's complement.
     const uint8_t* data = frame + 6;
     output.driveStateRaw = data[0];
     output.runningStateRaw = data[1];
@@ -160,6 +176,8 @@ bool decodeResponse(const uint8_t* frame, size_t length, MonitorData& output) {
 }
 
 ParseResult StreamParser::push(uint8_t value, MonitorData& output) {
+    // Resynchronize by discarding bytes until a 7E header appears. Once byte 4
+    // is known, the declared data size determines the complete frame length.
     if (count_ == 0) {
         if (value != kHeader) {
             ++discardedBytes_;

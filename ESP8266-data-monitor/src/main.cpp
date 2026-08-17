@@ -8,12 +8,16 @@
 
 namespace {
 
+// Network and controller timing are intentionally fixed to the values recovered
+// from the Windows application captures. UART0 must never be used for logging.
 constexpr char kAccessPointName[] = "CJPowerMonitor";
 constexpr char kAccessPointPassword[] = "CJPower123";
 constexpr uint32_t kControllerBaud = 115200;
 constexpr uint32_t kPollIntervalMs = 150;
 constexpr uint32_t kResponseTimeoutMs = 220;
 constexpr uint32_t kStaleAfterMs = 1000;
+constexpr uint32_t kHandshakeTimeoutMs = 5000;
+constexpr uint32_t kHandshakeRetryIntervalMs = 5000;
 constexpr uint8_t kMaximumAttempts = 2;
 
 ESP8266WebServer server(80);
@@ -27,8 +31,17 @@ uint32_t requestTimeMs = 0;
 uint32_t nextPollTimeMs = 0;
 char controllerIdentity[17] = "unconfirmed";
 bool handshakeComplete = false;
+uint32_t nextHandshakeAttemptMs = 0;
+uint32_t handshakeAttempts = 0;
 
+// Replays the read-only protocol-verification traffic from HandShake.pcapng and
+// accepts the controller only after its 5A A5 identity frame passes CRC checking.
+// This function blocks while probing; loop() never calls serviceController()
+// until it returns true.
 bool performProtocolVerification() {
+    ++handshakeAttempts;
+    // Preserve the approximate inter-frame gaps observed in the capture. The
+    // four middle probes contain identical bytes but are distinct transmissions.
     constexpr uint16_t delaysMs[] = {500, 70, 70, 70, 70, 500};
     for (size_t index = 0; index < monitor_protocol::kVerificationProbeCount; ++index) {
         size_t length = 0;
@@ -41,6 +54,8 @@ bool performProtocolVerification() {
         delay(delaysMs[index]);
     }
 
+    // Probe traffic has no expected reply. Remove any noise before the framed
+    // identity request so it cannot be mistaken for an identification response.
     while (Serial.available() > 0) { Serial.read(); }
     uint8_t identificationRequest[monitor_protocol::kIdentificationRequestSize]{};
     monitor_protocol::buildIdentificationRequest(identificationRequest);
@@ -49,7 +64,8 @@ bool performProtocolVerification() {
 
     uint8_t response[monitor_protocol::kIdentificationResponseSize]{};
     size_t count = 0;
-    const uint32_t deadline = millis() + 750;
+    // Signed subtraction makes this comparison safe across millis() rollover.
+    const uint32_t deadline = millis() + kHandshakeTimeoutMs;
     while (static_cast<int32_t>(millis() - deadline) < 0 && count < sizeof(response)) {
         if (Serial.available() <= 0) { yield(); continue; }
         const uint8_t value = static_cast<uint8_t>(Serial.read());
@@ -80,6 +96,8 @@ void appendStats(String& json) {
 }
 
 void handleLiveData() {
+    // /api/live retains raw values for fields whose enums or scaling have not
+    // been confirmed. The browser decides whether a snapshot is stale via ageMs.
     String json;
     json.reserve(1150);
     json += '{';
@@ -118,10 +136,15 @@ void handleLiveData() {
 }
 
 void handleStatus() {
+    // /api/status remains useful before telemetry starts: it tells the browser
+    // whether polling is gated and which controller identity was validated.
     String json;
     json.reserve(400);
     json += F("{\"firmware\":\"CJPower ESP8266 Data Monitor\",\"readOnly\":true,");
     json += F("\"handshakeComplete\":"); json += handshakeComplete ? F("true") : F("false");
+    json += F(",\"handshakeAttempts\":"); json += handshakeAttempts;
+    json += F(",\"handshakeTimeoutMs\":"); json += kHandshakeTimeoutMs;
+    json += F(",\"handshakeRetryIntervalMs\":"); json += kHandshakeRetryIntervalMs;
     json += F(",\"controllerIdentity\":\""); json += controllerIdentity; json += F("\",");
     json += F("\"baudRate\":115200,\"pollIntervalMs\":150,\"responseTimeoutMs\":220,");
     json += F("\"apIp\":\""); json += WiFi.softAPIP().toString();
@@ -133,6 +156,7 @@ void handleStatus() {
 }
 
 void sendRequest(uint32_t now) {
+    // The request buffer contains only the captured 84-byte read-only batch.
     Serial.write(request, sizeof(request));
     Serial.flush();
     ++stats.requests;
@@ -142,6 +166,8 @@ void sendRequest(uint32_t now) {
 }
 
 void serviceController(uint32_t now) {
+    // Drain all currently available UART bytes so fragmented USB/UART delivery
+    // does not affect frame parsing.
     while (Serial.available() > 0) {
         const int incoming = Serial.read();
         if (incoming < 0) {
@@ -162,6 +188,8 @@ void serviceController(uint32_t now) {
         }
     }
 
+    // Retry once after a response timeout. The next regular poll is scheduled
+    // only after the retry budget has been exhausted or a response is decoded.
     if (waitingForResponse && static_cast<uint32_t>(now - requestTimeMs) >= kResponseTimeoutMs) {
         ++stats.timeouts;
         waitingForResponse = false;
@@ -183,6 +211,37 @@ void serviceController(uint32_t now) {
     }
 }
 
+void serviceHandshake(uint32_t now) {
+    // This is the only transition that can set handshakeComplete. Consequently,
+    // no live batch request can be transmitted before identity validation.
+    if (handshakeComplete || static_cast<int32_t>(now - nextHandshakeAttemptMs) < 0) {
+        return;
+    }
+
+    waitingForResponse = false;
+    currentAttempt = 0;
+    parser.reset();
+    while (Serial.available() > 0) { Serial.read(); }
+
+    Serial1.print(F("Handshake attempt "));
+    Serial1.println(handshakeAttempts + 1);
+    handshakeComplete = performProtocolVerification();
+    if (handshakeComplete) {
+        Serial1.print(F("Handshake verified; controller: "));
+        Serial1.println(controllerIdentity);
+        parser.reset();
+        while (Serial.available() > 0) { Serial.read(); }
+        nextPollTimeMs = millis();
+        return;
+    }
+
+    // Schedule from the end of the failed attempt, giving a full five-second
+    // quiet interval before replaying the complete verification sequence.
+    nextHandshakeAttemptMs = millis() + kHandshakeRetryIntervalMs;
+    Serial1.println(F("Handshake failed; live polling remains disabled"));
+    Serial1.println(F("Retrying handshake in 5 seconds"));
+}
+
 }  // namespace
 
 void setup() {
@@ -195,8 +254,11 @@ void setup() {
         Serial.read();
     }
 
+    // Construct the fixed request once; no arbitrary register-write builder is
+    // included in this firmware.
     monitor_protocol::buildBatchReadRequest(request);
-    handshakeComplete = performProtocolVerification();
+    // serviceHandshake() performs the first attempt after the web server starts,
+    // then retries at a bounded interval without ever enabling polling early.
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(kAccessPointName, kAccessPointPassword);
@@ -213,14 +275,19 @@ void setup() {
     Serial1.println(F("CJPower read-only data monitor"));
     Serial1.print(F("AP: ")); Serial1.println(kAccessPointName);
     Serial1.print(F("IP: ")); Serial1.println(WiFi.softAPIP());
-    Serial1.print(F("Handshake: ")); Serial1.println(handshakeComplete ? F("verified") : F("no identification response"));
-    Serial1.print(F("Controller: ")); Serial1.println(controllerIdentity);
-    nextPollTimeMs = millis();
+    Serial1.println(F("Handshake: pending; live polling disabled"));
+    nextHandshakeAttemptMs = millis();
 }
 
 void loop() {
     const uint32_t now = millis();
-    serviceController(now);
+    // Handshake and telemetry are mutually exclusive states. Web serving remains
+    // available between handshake attempts so the page can show pending status.
+    if (handshakeComplete) {
+        serviceController(now);
+    } else {
+        serviceHandshake(now);
+    }
     server.handleClient();
     yield();
 }
