@@ -247,6 +247,7 @@ void serviceHandshake(uint32_t now) {
 void setup() {
     // UART0 (GPIO1 TX, GPIO3 RX) is dedicated to the motor controller.
     Serial.begin(kControllerBaud, SERIAL_8N1);
+    Serial.swap(); // Moves UART0 TX to GPIO15 and RX to GPIO13
     // UART1 is TX-only on GPIO2 and is reserved for diagnostic messages.
     Serial1.begin(115200);
     delay(150);

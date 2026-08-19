@@ -13,6 +13,8 @@ Read-only ESP8266 firmware for the CJ Power motor-controller live-monitor protoc
 UART0 uses 115200 baud, 8 data bits, no parity, one stop bit, and no flow control. UART1 TX on GPIO2 is used only for diagnostics.
 
 ESP8266 GPIO is 3.3 V only. Verify the controller voltage before connecting it. UART0 emits bootloader messages during reset; isolate TX if unsolicited startup bytes could be unsafe.
+##  New Wiring
+Serial.swap(); // Moves UART0 TX to GPIO15 (D8) and RX to GPIO13 (D7)
 
 ## Build
 
