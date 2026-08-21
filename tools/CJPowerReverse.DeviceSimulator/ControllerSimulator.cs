@@ -97,6 +97,13 @@ internal sealed class ControllerSimulator(SerialPort port)
         {
             handshakeProbeIndex++;
             Console.WriteLine($"Handshake probe {handshakeProbeIndex}/6 received");
+            if (handshakeProbeIndex == VerificationProbes.Length)
+            {
+                // The client changes from the 7E baud to the 5A A5 baud after
+                // the final probe and before sending the identity request.
+                port.BaudRate = 115200;
+                Console.WriteLine("Serial baud changed to 115200 for identification");
+            }
             return;
         }
 
@@ -131,8 +138,13 @@ internal sealed class ControllerSimulator(SerialPort port)
         {
             byte[] identity = Encoding.ASCII.GetBytes("B1.T2.009-031A");
             Send(Build5AA5Response(0x8005, identity));
+            // Allow the response to leave the UART before following the ESP8266
+            // back to the 57600-baud live batch protocol.
+            Thread.Sleep(20);
+            port.BaudRate = 57600;
             handshakeComplete = true;
             Console.WriteLine("Handshake successful; identity B1.T2.009-031A returned");
+            Console.WriteLine("Serial baud changed to 57600 for dashboard batches");
             return;
         }
 

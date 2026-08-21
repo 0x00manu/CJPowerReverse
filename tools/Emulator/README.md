@@ -16,7 +16,9 @@ dotnet run --project .\tests\DashboardTest -- COM11 5
 
 Behavior:
 
-- opens the requested port at 115200 8N1 with no flow control;
+- opens the requested port at 57600 8N1 for the `7E` handshake probes;
+- switches to 115200 for the `5A A5` identity response, then back to 57600 for
+  ESP8266 dashboard batches;
 - waits for all six captured `7E` handshake probes in order;
 - replies to the `5A A5` identity query with `B1.T2.009-031A` and a valid CRC;
 - ignores dashboard requests until the handshake succeeds;

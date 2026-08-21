@@ -2,7 +2,8 @@
 
 This .NET console program emulates the read-only controller behavior required by
 `tests/DashboardTest` and the ESP8266 data monitor. It listens on one side of a
-virtual null-modem pair at 115200 8N1.
+virtual null-modem pair using 57600 8N1 for `7E` traffic and 115200 8N1 for the
+`5A A5` identity exchange.
 
 The simulator:
 

@@ -376,6 +376,13 @@ Exit codes:
 
 The capture contains 184 polling requests and 184 matching responses over approximately 25.6 seconds, giving an update rate of about 7.2 polls per second. The CH343 has USB address 4 in this capture.
 
+`screen_shot_live.pcapng` begins after COM-port configuration, so it does not by
+itself encode the baud rate. Correlation with `HandShake.pcapng` and the physical
+Saleae recording `doc/CJPower-connect.sal` establishes 57600 8N1 for this `7E`
+live traffic. The `5A A5` identity/register protocol operates at 115200 8N1.
+The CH34x divisor values corroborate this: `0x9803` maps to 57600 and `0xCC03`
+maps to 115200.
+
 This monitor uses the older `7E` batch-read protocol, not the `5A A5` single-register protocol used by `conReadWrite.pcapng`.
 
 ### Batch-read request
@@ -468,7 +475,8 @@ FF FE = -2  -> -0.2 A DC current
 
 The firmware:
 
-- Uses hardware UART0 at 115200 8N1 for the motor controller.
+- Uses hardware UART0 at 57600 8N1 for `7E` live monitoring and switches to
+  115200 8N1 for the `5A A5` identity exchange.
 - Uses UART1 TX on GPIO2 for optional diagnostic output.
 - Sends the exact captured 84-byte, 25-address batch-read request.
 - Parses fragmented 45-byte responses without blocking the web server.

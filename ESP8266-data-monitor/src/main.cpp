@@ -12,8 +12,9 @@ namespace {
 // from the Windows application captures. UART0 must never be used for logging.
 constexpr char kAccessPointName[] = "CJPowerMonitor";
 constexpr char kAccessPointPassword[] = "CJPower123";
-constexpr uint32_t kControllerBaud = 115200;
-constexpr uint32_t kPollIntervalMs = 150;
+constexpr uint32_t kBatchBaud = 57600;
+constexpr uint32_t kIdentificationBaud = 115200;
+constexpr uint32_t kPollIntervalMs = 350;
 constexpr uint32_t kResponseTimeoutMs = 220;
 constexpr uint32_t kStaleAfterMs = 1000;
 constexpr uint32_t kHandshakeTimeoutMs = 5000;
@@ -21,10 +22,10 @@ constexpr uint32_t kHandshakeRetryIntervalMs = 5000;
 constexpr uint8_t kMaximumAttempts = 2;
 
 ESP8266WebServer server(80);
-monitor_protocol::StreamParser parser;
+monitor_protocol::RegisterStreamParser parser;
 MonitorData monitorData;
 CommunicationStats stats;
-uint8_t request[monitor_protocol::kRequestSize]{};
+uint8_t request[monitor_protocol::kRegisterRequestSize]{};
 bool waitingForResponse = false;
 uint8_t currentAttempt = 0;
 uint32_t requestTimeMs = 0;
@@ -33,6 +34,21 @@ char controllerIdentity[17] = "unconfirmed";
 bool handshakeComplete = false;
 uint32_t nextHandshakeAttemptMs = 0;
 uint32_t handshakeAttempts = 0;
+uint32_t activeControllerBaud = kBatchBaud;
+size_t registerIndex = 0;
+MonitorData pendingMonitorData;
+uint32_t cycleStartTimeMs = 0;
+
+void setControllerBaud(uint32_t baud) {
+    if (activeControllerBaud == baud) {
+        return;
+    }
+    Serial.flush();
+    Serial.updateBaudRate(baud);
+    activeControllerBaud = baud;
+    delay(20);
+    while (Serial.available() > 0) { Serial.read(); }
+}
 
 // Replays the read-only protocol-verification traffic from HandShake.pcapng and
 // accepts the controller only after its 5A A5 identity frame passes CRC checking.
@@ -40,6 +56,9 @@ uint32_t handshakeAttempts = 0;
 // until it returns true.
 bool performProtocolVerification() {
     ++handshakeAttempts;
+    // The Saleae trace and CH343 setup sequence correlate the 7E protocol with
+    // 57600 baud. The later 5A A5 identity exchange runs at 115200 baud.
+    setControllerBaud(kBatchBaud);
     // Preserve the approximate inter-frame gaps observed in the capture. The
     // four middle probes contain identical bytes but are distinct transmissions.
     constexpr uint16_t delaysMs[] = {500, 70, 70, 70, 70, 500};
@@ -57,6 +76,7 @@ bool performProtocolVerification() {
     // Probe traffic has no expected reply. Remove any noise before the framed
     // identity request so it cannot be mistaken for an identification response.
     while (Serial.available() > 0) { Serial.read(); }
+    setControllerBaud(kIdentificationBaud);
     uint8_t identificationRequest[monitor_protocol::kIdentificationRequestSize]{};
     monitor_protocol::buildIdentificationRequest(identificationRequest);
     Serial.write(identificationRequest, sizeof(identificationRequest));
@@ -73,8 +93,10 @@ bool performProtocolVerification() {
         if (count == 1 && value != 0xA5) { count = 0; continue; }
         response[count++] = value;
     }
-    return monitor_protocol::decodeIdentification(
+    const bool valid = monitor_protocol::decodeIdentification(
         response, count, controllerIdentity, sizeof(controllerIdentity));
+    // The successful application remains at 115200 for dashboard register reads.
+    return valid;
 }
 
 void writeJsonBoolean(String& json, const __FlashStringHelper* name, bool value) {
@@ -146,7 +168,9 @@ void handleStatus() {
     json += F(",\"handshakeTimeoutMs\":"); json += kHandshakeTimeoutMs;
     json += F(",\"handshakeRetryIntervalMs\":"); json += kHandshakeRetryIntervalMs;
     json += F(",\"controllerIdentity\":\""); json += controllerIdentity; json += F("\",");
-    json += F("\"baudRate\":115200,\"pollIntervalMs\":150,\"responseTimeoutMs\":220,");
+    json += F("\"probeBaudRate\":57600,\"registerBaudRate\":115200,");
+    json += F("\"activeControllerBaudRate\":"); json += activeControllerBaud;
+    json += F(",\"pollIntervalMs\":350,\"responseTimeoutMs\":220,");
     json += F("\"apIp\":\""); json += WiFi.softAPIP().toString();
     json += F("\",\"clients\":"); json += WiFi.softAPgetStationNum();
     json += ','; appendStats(json);
@@ -156,7 +180,12 @@ void handleStatus() {
 }
 
 void sendRequest(uint32_t now) {
-    // The request buffer contains only the captured 84-byte read-only batch.
+    if (registerIndex == 0 && currentAttempt == 0) {
+        cycleStartTimeMs = now;
+    }
+    const monitor_protocol::RegisterDescriptor& descriptor =
+        monitor_protocol::dashboardRegister(registerIndex);
+    monitor_protocol::buildRegisterReadRequest(descriptor.address, descriptor.size, request);
     Serial.write(request, sizeof(request));
     Serial.flush();
     ++stats.requests;
@@ -174,13 +203,24 @@ void serviceController(uint32_t now) {
             break;
         }
 
-        const monitor_protocol::ParseResult result = parser.push(static_cast<uint8_t>(incoming), monitorData);
+        const monitor_protocol::RegisterDescriptor& descriptor =
+            monitor_protocol::dashboardRegister(registerIndex);
+        const monitor_protocol::ParseResult result =
+            parser.push(static_cast<uint8_t>(incoming), descriptor, pendingMonitorData);
         if (result == monitor_protocol::ParseResult::Response) {
-            monitorData.updateTimeMs = now;
             ++stats.validResponses;
             waitingForResponse = false;
             currentAttempt = 0;
-            nextPollTimeMs = now + kPollIntervalMs;
+            ++registerIndex;
+            if (registerIndex == monitor_protocol::kDashboardRegisterCount) {
+                pendingMonitorData.valid = true;
+                pendingMonitorData.updateTimeMs = now;
+                monitorData = pendingMonitorData;
+                registerIndex = 0;
+                nextPollTimeMs = cycleStartTimeMs + kPollIntervalMs;
+            } else {
+                nextPollTimeMs = now;
+            }
         } else if (result == monitor_protocol::ParseResult::ChecksumError) {
             ++stats.checksumErrors;
         } else if (result == monitor_protocol::ParseResult::Malformed) {
@@ -198,6 +238,8 @@ void serviceController(uint32_t now) {
             sendRequest(now);
         } else {
             currentAttempt = 0;
+            registerIndex = 0;
+            pendingMonitorData = MonitorData{};
             nextPollTimeMs = now + kPollIntervalMs;
         }
     }
@@ -213,13 +255,15 @@ void serviceController(uint32_t now) {
 
 void serviceHandshake(uint32_t now) {
     // This is the only transition that can set handshakeComplete. Consequently,
-    // no live batch request can be transmitted before identity validation.
+    // no dashboard register request can be transmitted before identity validation.
     if (handshakeComplete || static_cast<int32_t>(now - nextHandshakeAttemptMs) < 0) {
         return;
     }
 
     waitingForResponse = false;
     currentAttempt = 0;
+    registerIndex = 0;
+    pendingMonitorData = MonitorData{};
     parser.reset();
     while (Serial.available() > 0) { Serial.read(); }
 
@@ -246,8 +290,8 @@ void serviceHandshake(uint32_t now) {
 
 void setup() {
     // UART0 (GPIO1 TX, GPIO3 RX) is dedicated to the motor controller.
-    Serial.begin(kControllerBaud, SERIAL_8N1);
-    Serial.swap(); // Moves UART0 TX to GPIO15 and RX to GPIO13
+    Serial.begin(kBatchBaud, SERIAL_8N1);
+    //Serial.swap(); // Moves UART0 TX to GPIO15 and RX to GPIO13
     // UART1 is TX-only on GPIO2 and is reserved for diagnostic messages.
     Serial1.begin(115200);
     delay(150);
@@ -255,9 +299,8 @@ void setup() {
         Serial.read();
     }
 
-    // Construct the fixed request once; no arbitrary register-write builder is
-    // included in this firmware.
-    monitor_protocol::buildBatchReadRequest(request);
+    // Register requests are built immediately before transmission. The protocol
+    // layer intentionally exposes no register-write operation.
     // serviceHandshake() performs the first attempt after the web server starts,
     // then retries at a bounded interval without ever enabling polling early.
 

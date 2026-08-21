@@ -2,13 +2,15 @@
 
 This document describes the two application protocols observed between the
 Windows program and the controller. Both run over the CH343 serial connection
-using **115200 baud, 8 data bits, no parity, 1 stop bit, and no flow control**.
+using **8 data bits, no parity, 1 stop bit, and no flow control**. The baud rate
+depends on the application protocol: `7E` uses **57600 baud**, while `5A A5`
+uses **115200 baud**.
 All hex listings contain bytes, not ASCII text: a terminal must transmit `7E`
 as the single byte `0x7E`, rather than the two characters `7` and `E`.
 
-The `7E` protocol performs a live batch read for the Data Monitor screen. The
-`5A A5` protocol reads or writes individual configuration registers. They have
-different framing and checksum algorithms and must not be mixed.
+The `7E` protocol can perform a live batch read for the Data Monitor screen. The
+successful connection trace uses `5A A5` individual register reads after the
+identity handshake. The protocols have different framing and checksums.
 
 > **Safety:** Start with read requests only. Do not send `5A A5` write frames,
 > commit/reset commands, or experimental commands to valuable hardware. Confirm
@@ -16,10 +18,11 @@ different framing and checksum algorithms and must not be mixed.
 
 ## Sending hex from a serial terminal
 
-Configure the port as `115200 8N1`, flow control `None`, then use a terminal's
-binary/hex-send function. Do not enable automatic CR/LF: the required terminator
-bytes are already present in each example. Clear old receive data before sending
-one request and display received data as hexadecimal.
+Configure the port as `57600 8N1` for `7E`, or `115200 8N1` for `5A A5`, with
+flow control `None`, then use a terminal's binary/hex-send function. Do not enable
+automatic CR/LF: the required terminator bytes are already present in each
+example. Clear old receive data before sending one request and display received
+data as hexadecimal.
 
 Not every text-oriented terminal can transmit arbitrary binary bytes. RealTerm's
 **Send Numbers** feature or a small script that converts the listings below to
@@ -109,6 +112,10 @@ was not observed in the capture and controller support has not been established.
 The firmware deliberately uses the confirmed full batch request instead.
 
 ## `5A A5` single-register protocol
+
+`CJPower-connect-pass.sal` confirms this successful sequence: six `7E` probes at
+57600, a `5A A5` identity request at 115200, then continued `5A A5` dashboard
+reads at 115200. The application does not return to 57600 in that workflow.
 
 ### Frame format
 

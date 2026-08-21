@@ -269,6 +269,16 @@ USB address: 4
 
 There are 184 data-bearing bulk-OUT packets of 84 bytes and 184 data-bearing bulk-IN packets of 45 bytes. The effective polling rate is about 7.2 Hz. Each OUT transfer has a corresponding IN response.
 
+Baud-rate correction: `screen_shot_live.pcapng` starts after the serial port was
+configured and therefore contains no CH343 baud-setting control request. The
+physical `doc/CJPower-connect.sal` measurement confirms that its `7E` traffic is
+57600 8N1. In `doc/HandShake.pcapng`, the CH343 `0xA1/0xC39C` request with
+`wIndex=0x9803` immediately precedes the `7E` probes, while `wIndex=0xCC03`
+immediately precedes the successful 115200-baud `5A A5` identity exchange. Do
+not infer baud from USB bulk timing alone. The CH341-family divisor equation in
+the Linux driver independently decodes `0x9803` as 57600 and `0xCC03` as 115200;
+the CH343 capture uses the same vendor-request representation.
+
 ### Live batch-read request
 
 All 184 requests are identical:
@@ -352,7 +362,8 @@ Function key order is Brake, AntiTheft, Park, Cruise, Reverse, SideStand, BOOST,
 
 Architecture:
 
-- Hardware UART0 on GPIO1 TX/GPIO3 RX communicates with the controller at 115200 8N1.
+- Hardware UART0 on GPIO1 TX/GPIO3 RX uses 57600 8N1 for `7E` probes/live
+  batches and 115200 8N1 for the `5A A5` identity exchange.
 - UART1 TX on GPIO2 carries optional diagnostics; never print diagnostics to UART0.
 - `MonitorProtocol.cpp` owns request generation, checksum validation, stream resynchronization and response decoding.
 - `MonitorData.h` preserves uncertain states and scaling as raw values alongside confirmed conversion helpers.

@@ -1,7 +1,8 @@
 using System.Globalization;
 using System.IO.Ports;
 
-const int BaudRate = 115200;
+const int BatchBaudRate = 57600;
+const int IdentificationBaudRate = 115200;
 TimeSpan pollPeriod = TimeSpan.FromSeconds(1);
 TimeSpan responseTimeout = TimeSpan.FromMilliseconds(750);
 
@@ -19,7 +20,7 @@ Console.CancelKeyPress += (_, eventArgs) =>
     stopping.Cancel();
 };
 
-using SerialPort port = new(portName, BaudRate, Parity.None, 8, StopBits.One)
+using SerialPort port = new(portName, BatchBaudRate, Parity.None, 8, StopBits.One)
 {
     Handshake = Handshake.None,
     DtrEnable = true,
@@ -39,7 +40,7 @@ catch (Exception exception)
 }
 
 Console.WriteLine("CJPower live DashboardTest");
-Console.WriteLine($"Port: {port.PortName} at {BaudRate} 8N1, no flow control, DTR on, RTS off");
+Console.WriteLine($"Port: {port.PortName}; 7E={BatchBaudRate}, 5A A5={IdentificationBaudRate}, 8N1, no flow control, DTR on, RTS off");
 Console.WriteLine("Mode: read-only protocol detection and monitoring. Press Ctrl+C to stop.");
 Console.WriteLine();
 
@@ -143,6 +144,7 @@ static bool TryParseArguments(string[] arguments, out string portName, out int? 
 static ControllerProtocol DetectProtocol(SerialPort port, CancellationToken cancellationToken, out string identity)
 {
     identity = string.Empty;
+    SetBaudRate(port, 57600);
     int[] delaysAfterProbeMs = [500, 70, 70, 70, 70, 500];
     for (int index = 0; index < LiveMonitorProtocol.VerificationProbes.Length; index++)
     {
@@ -153,6 +155,7 @@ static ControllerProtocol DetectProtocol(SerialPort port, CancellationToken canc
     }
 
     port.DiscardInBuffer();
+    SetBaudRate(port, 115200);
     port.Write(LiveMonitorProtocol.IdentificationRequest, 0, LiveMonitorProtocol.IdentificationRequest.Length);
     try
     {
@@ -162,12 +165,26 @@ static ControllerProtocol DetectProtocol(SerialPort port, CancellationToken canc
     }
     catch (TimeoutException)
     {
+        SetBaudRate(port, 57600);
         port.DiscardInBuffer();
         port.Write(LiveMonitorProtocol.BatchReadRequest, 0, LiveMonitorProtocol.BatchReadRequest.Length);
         byte[] response = ReadFrame(port, TimeSpan.FromMilliseconds(750), cancellationToken, 0x7E);
         _ = LiveMonitorProtocol.DecodeResponse(response);
         return ControllerProtocol.Batch7E;
     }
+}
+
+static void SetBaudRate(SerialPort port, int baudRate)
+{
+    if (port.BaudRate == baudRate)
+    {
+        return;
+    }
+
+    port.BaseStream.Flush();
+    port.BaudRate = baudRate;
+    Thread.Sleep(20);
+    port.DiscardInBuffer();
 }
 
 static DashboardSnapshot ReadBatchSnapshot(SerialPort port, CancellationToken cancellationToken)

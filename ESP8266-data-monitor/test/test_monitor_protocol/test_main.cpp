@@ -69,6 +69,42 @@ void testIdentificationResponseDecodes() {
     TEST_ASSERT_FALSE(monitor_protocol::decodeIdentification(response, sizeof(response), identity, sizeof(identity)));
 }
 
+void testRegisterRequestMatchesWorkingCapture() {
+    uint8_t request[monitor_protocol::kRegisterRequestSize]{};
+    monitor_protocol::buildRegisterReadRequest(113, 2, request);
+    const uint8_t expected[] = {
+        0x5A, 0xA5, 0x03, 0x71, 0x80, 0x02, 0x7E, 0x18, 0x0D, 0x0A
+    };
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, request, sizeof(expected));
+}
+
+void testRegisterResponseUpdatesDashboardField() {
+    const uint8_t response[] = {
+        0x5A, 0xA5, 0x04, 0x71, 0x80, 0xE1, 0x01, 0xF9, 0xB8, 0x0D, 0x0A
+    };
+    MonitorData data;
+    const monitor_protocol::RegisterDescriptor descriptor{113, 2};
+    TEST_ASSERT_TRUE(monitor_protocol::decodeRegisterResponse(
+        response, sizeof(response), descriptor, data));
+    TEST_ASSERT_EQUAL_UINT16(481, data.dcVoltageRaw);
+}
+
+void testRegisterStreamRejectsCrcDamage() {
+    uint8_t response[] = {
+        0x5A, 0xA5, 0x03, 0xDE, 0x80, 0x4C, 0xD9, 0x20, 0x0D, 0x0A
+    };
+    response[6] ^= 1;
+    monitor_protocol::RegisterStreamParser parser;
+    MonitorData data;
+    const monitor_protocol::RegisterDescriptor descriptor{222, 1};
+    monitor_protocol::ParseResult result = monitor_protocol::ParseResult::None;
+    for (uint8_t value : response) {
+        result = parser.push(value, descriptor, data);
+    }
+    TEST_ASSERT_EQUAL_INT(static_cast<int>(monitor_protocol::ParseResult::ChecksumError),
+                          static_cast<int>(result));
+}
+
 }  // namespace
 
 int main(int, char**) {
@@ -78,5 +114,8 @@ int main(int, char**) {
     RUN_TEST(testChecksumDamageIsRejected);
     RUN_TEST(testFragmentedStreamAndNoise);
     RUN_TEST(testIdentificationResponseDecodes);
+    RUN_TEST(testRegisterRequestMatchesWorkingCapture);
+    RUN_TEST(testRegisterResponseUpdatesDashboardField);
+    RUN_TEST(testRegisterStreamRejectsCrcDamage);
     return UNITY_END();
 }

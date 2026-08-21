@@ -14,7 +14,7 @@ Console.CancelKeyPress += (_, eventArgs) =>
     stopping.Cancel();
 };
 
-using SerialPort port = new(args[0], 115200, Parity.None, 8, StopBits.One)
+using SerialPort port = new(args[0], 57600, Parity.None, 8, StopBits.One)
 {
     Handshake = Handshake.None,
     DtrEnable = true,
@@ -34,7 +34,7 @@ catch (Exception exception)
 }
 
 Console.WriteLine("CJPower controller simulator");
-Console.WriteLine($"Port: {port.PortName} at 115200 8N1, no flow control");
+Console.WriteLine($"Port: {port.PortName}; 7E=57600, 5A A5=115200, 8N1, no flow control");
 Console.WriteLine("Waiting for the six-probe handshake. Press Ctrl+C to stop.");
 Console.WriteLine();
 

@@ -18,6 +18,14 @@ constexpr size_t kMaximumFrameSize = 96;
 constexpr size_t kIdentificationRequestSize = 10;
 constexpr size_t kIdentificationResponseSize = 23;
 constexpr size_t kVerificationProbeCount = 6;
+constexpr size_t kDashboardRegisterCount = 25;
+constexpr size_t kRegisterRequestSize = 10;
+constexpr size_t kMaximumRegisterResponseSize = 13;
+
+struct RegisterDescriptor {
+    uint16_t address;
+    uint8_t size;
+};
 
 enum class ParseResult : uint8_t {
     None,
@@ -40,6 +48,11 @@ const uint8_t* verificationProbe(size_t index, size_t& length);
 // Builds and validates the 5A A5 read-only controller identity exchange.
 void buildIdentificationRequest(uint8_t (&output)[kIdentificationRequestSize]);
 bool decodeIdentification(const uint8_t* frame, size_t length, char* output, size_t outputSize);
+const RegisterDescriptor& dashboardRegister(size_t index);
+void buildRegisterReadRequest(uint16_t address, uint8_t size,
+                              uint8_t (&output)[kRegisterRequestSize]);
+bool decodeRegisterResponse(const uint8_t* frame, size_t length,
+                            const RegisterDescriptor& expected, MonitorData& output);
 
 // Validates and decodes the fixed 45-byte 7E live-monitor response.
 bool validateFrame(const uint8_t* frame, size_t length);
@@ -55,6 +68,19 @@ public:
 
 private:
     uint8_t buffer_[kMaximumFrameSize]{};
+    size_t count_ = 0;
+    size_t expectedLength_ = 0;
+    uint32_t discardedBytes_ = 0;
+};
+
+class RegisterStreamParser {
+public:
+    ParseResult push(uint8_t value, const RegisterDescriptor& expected, MonitorData& output);
+    void reset();
+    uint32_t discardedBytes() const { return discardedBytes_; }
+
+private:
+    uint8_t buffer_[kMaximumRegisterResponseSize]{};
     size_t count_ = 0;
     size_t expectedLength_ = 0;
     uint32_t discardedBytes_ = 0;

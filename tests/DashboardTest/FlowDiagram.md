@@ -9,7 +9,7 @@ values once per second.
 flowchart TD
     Start([Start DashboardTest]) --> Args{Arguments valid?}
     Args -- No --> Usage[Print usage and exit code 2]
-    Args -- Yes --> Configure[Configure serial port<br/>115200 baud, 8N1<br/>no flow control<br/>DTR on, RTS off]
+    Args -- Yes --> Configure[Configure serial port<br/>7E: 57600 baud<br/>5A A5: 115200 baud<br/>8N1, no flow control<br/>DTR on, RTS off]
 
     Configure --> Open{Open COM port?}
     Open -- No --> OpenError[Print error and exit code 3]

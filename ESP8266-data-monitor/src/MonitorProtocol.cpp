@@ -26,9 +26,18 @@ constexpr uint8_t kProbe0[] = {0x7E, 0x00, 0x02, 0x08, 0x04, 0xC0, 0x90, 0x00, 0
 constexpr uint8_t kProbe1[] = {0x7E, 0x00, 0x03, 0x01, 0x02, 0xE0, 0xC0, 0xC0, 0x9A, 0xFD, 0x0D};
 constexpr uint8_t kProbe5[] = {0x7E, 0x00, 0x03, 0x02, 0x04, 0xC0, 0x30, 0x00, 0x20, 0x00, 0xE7, 0xFE, 0x0D};
 constexpr uint8_t kIdentificationRequest[] = {0x5A, 0xA5, 0x03, 0x05, 0x80, 0x10, 0xC5, 0x2E, 0x0D, 0x0A};
+constexpr RegisterDescriptor kDashboardRegisters[] = {
+    {57, 1}, {245, 1}, {192, 1}, {203, 1}, {105, 2}, {239, 4},
+    {119, 2}, {113, 2}, {224, 2}, {115, 2}, {220, 2}, {222, 1},
+    {223, 1}, {90, 1}, {1130, 2}, {1132, 2}, {232, 1}, {233, 1},
+    {234, 1}, {235, 1}, {236, 1}, {237, 1}, {238, 1}, {243, 1}, {244, 1}
+};
 
 static_assert(sizeof(kRequestPrefix) + sizeof(kDescriptors) + 3 == kRequestSize,
               "Captured request size changed");
+static_assert(sizeof(kDashboardRegisters) / sizeof(kDashboardRegisters[0]) ==
+                  kDashboardRegisterCount,
+              "Dashboard register count changed");
 
 uint16_t readU16(const uint8_t* value) {
     return static_cast<uint16_t>(value[0]) |
@@ -114,6 +123,66 @@ bool decodeIdentification(const uint8_t* frame, size_t length, char* output, siz
     }
     memcpy(output, frame + 5, kIdentitySize);
     output[kIdentitySize] = '\0';
+    return true;
+}
+
+const RegisterDescriptor& dashboardRegister(size_t index) {
+    return kDashboardRegisters[index];
+}
+
+void buildRegisterReadRequest(uint16_t address, uint8_t size,
+                              uint8_t (&output)[kRegisterRequestSize]) {
+    const uint16_t encodedAddress = static_cast<uint16_t>(address | 0x8000U);
+    output[0] = 0x5A; output[1] = 0xA5; output[2] = 0x03;
+    output[3] = static_cast<uint8_t>(encodedAddress & 0xFFU);
+    output[4] = static_cast<uint8_t>(encodedAddress >> 8U);
+    output[5] = size;
+    const uint16_t crc = computeCrc(output + 3, 3);
+    output[6] = static_cast<uint8_t>(crc & 0xFFU);
+    output[7] = static_cast<uint8_t>(crc >> 8U);
+    output[8] = 0x0D; output[9] = 0x0A;
+}
+
+bool decodeRegisterResponse(const uint8_t* frame, size_t length,
+                            const RegisterDescriptor& expected, MonitorData& output) {
+    const size_t expectedLength = static_cast<size_t>(expected.size) + 9U;
+    const uint16_t encodedAddress = static_cast<uint16_t>(expected.address | 0x8000U);
+    if (frame == nullptr || expected.size == 0 || expected.size > 4 ||
+        length != expectedLength || frame[0] != 0x5A || frame[1] != 0xA5 ||
+        frame[2] != expected.size + 2U || readU16(frame + 3) != encodedAddress ||
+        frame[length - 2] != 0x0D || frame[length - 1] != 0x0A ||
+        readU16(frame + 5 + expected.size) != computeCrc(frame + 3, expected.size + 2U)) {
+        return false;
+    }
+    const uint8_t* value = frame + 5;
+    switch (expected.address) {
+        case 57: output.driveStateRaw = value[0]; break;
+        case 245: output.runningStateRaw = value[0]; break;
+        case 192: output.vehicleGearRaw = value[0]; break;
+        case 203: output.vehicleModeRaw = value[0]; break;
+        case 105: output.motorSpeedRpm = readI16(value); break;
+        case 239: output.faultCode = readU32(value); break;
+        case 119: output.dcCurrentRaw = readI16(value); break;
+        case 113: output.dcVoltageRaw = readU16(value); break;
+        case 224: output.phaseCurrentRaw = readI16(value); break;
+        case 115: output.motorPowerRaw = readI16(value); break;
+        case 220: output.throttleVoltageRaw = readU16(value); break;
+        case 222: output.mcuTemperatureRaw = value[0]; break;
+        case 223: output.motorTemperatureRaw = value[0]; break;
+        case 90: output.hallValue = value[0]; break;
+        case 1130: output.p1 = readU16(value); break;
+        case 1132: output.p2 = readU16(value); break;
+        case 232: output.brake = value[0] != 0; break;
+        case 233: output.antiTheft = value[0] != 0; break;
+        case 234: output.park = value[0] != 0; break;
+        case 235: output.cruise = value[0] != 0; break;
+        case 236: output.reverse = value[0] != 0; break;
+        case 237: output.sideStand = value[0] != 0; break;
+        case 238: output.boost = value[0] != 0; break;
+        case 243: output.accelerateGear = value[0] != 0; break;
+        case 244: output.decelerateGear = value[0] != 0; break;
+        default: return false;
+    }
     return true;
 }
 
@@ -222,6 +291,35 @@ ParseResult StreamParser::push(uint8_t value, MonitorData& output) {
 }
 
 void StreamParser::reset() {
+    count_ = 0;
+    expectedLength_ = 0;
+}
+
+ParseResult RegisterStreamParser::push(uint8_t value, const RegisterDescriptor& expected,
+                                       MonitorData& output) {
+    if (count_ == 0) {
+        if (value != 0x5A) { ++discardedBytes_; return ParseResult::None; }
+        buffer_[count_++] = value;
+        return ParseResult::None;
+    }
+    if (count_ == 1 && value != 0xA5) {
+        reset(); ++discardedBytes_; return ParseResult::Malformed;
+    }
+    if (count_ >= sizeof(buffer_)) { reset(); return ParseResult::Malformed; }
+    buffer_[count_++] = value;
+    if (count_ == 3) {
+        expectedLength_ = static_cast<size_t>(buffer_[2]) + 7U;
+        if (expectedLength_ < 9 || expectedLength_ > sizeof(buffer_)) {
+            reset(); return ParseResult::Malformed;
+        }
+    }
+    if (expectedLength_ == 0 || count_ < expectedLength_) return ParseResult::None;
+    const bool decoded = decodeRegisterResponse(buffer_, count_, expected, output);
+    reset();
+    return decoded ? ParseResult::Response : ParseResult::ChecksumError;
+}
+
+void RegisterStreamParser::reset() {
     count_ = 0;
     expectedLength_ = 0;
 }

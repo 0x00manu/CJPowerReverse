@@ -10,7 +10,10 @@ Read-only ESP8266 firmware for the CJ Power motor-controller live-monitor protoc
 | GPIO3 / UART0 RX | TX |
 | GND | GND |
 
-UART0 uses 115200 baud, 8 data bits, no parity, one stop bit, and no flow control. UART1 TX on GPIO2 is used only for diagnostics.
+UART0 uses 57600 baud for the six `7E` verification probes, then switches to
+115200 baud for the `5A A5` identity and dashboard reads. Both phases use 8 data
+bits, no parity, one stop bit, and no flow control. UART1 TX on GPIO2 remains at
+115200 for diagnostics.
 
 ESP8266 GPIO is 3.3 V only. Verify the controller voltage before connecting it. UART0 emits bootloader messages during reset; isolate TX if unsolicited startup bytes could be unsafe.
 ##  New Wiring
@@ -42,13 +45,20 @@ python -m platformio run -d .\ESP8266-data-monitor -t upload --upload-port COM5
 2. Use password `CJPower123`.
 3. Open `http://192.168.4.1/`.
 
-The firmware polls the captured 25-field batch request every 150 ms. It validates the response checksum, maintains communication statistics, and exposes `/api/live` and `/api/status` JSON endpoints.
+The firmware starts a 25-register dashboard cycle approximately every 350 ms.
+It validates every response address, size, CRC and terminator and publishes only
+a complete snapshot. Communication statistics are exposed through `/api/live`
+and `/api/status`.
 
 At startup it first reproduces the read-only protocol-verification sequence from
 `doc/HandShake.pcapng`: six captured `7E` probes followed by the `5A A5` identity
 read for address 5. A valid identity (captured example `B1.T2.009-031A`) is shown
 in `/api/status` and on diagnostic UART1. The firmware then begins the confirmed
-`7E` live batch polling. No write, commit, or reset command is sent.
+`5A A5` individual dashboard reads. No write, commit, or reset command is sent.
+
+The firmware transmits the six `7E` probes at 57600, changes UART0 to 115200 for
+the identity request/response, and remains at 115200 for dashboard polling. This
+sequence is confirmed by `doc/CJPower-connect-pass.sal`.
 
 The identity response has `LEN=0x10`: this counts the two encoded-address bytes
 plus the 14-character identity, rather than returning 16 identity bytes.
@@ -57,12 +67,14 @@ address; it excludes the CRC and `0D 0A` terminator.
 
 Live polling is strictly gated by the handshake. Each identification response is
 allowed up to 5 seconds. If the handshake fails, the firmware sends no dashboard
-batch reads, waits 5 seconds after the failed attempt, and repeats the complete
+register reads, waits 5 seconds after the failed attempt, and repeats the complete
 verification sequence. `/api/status` exposes the handshake state, attempt count,
 timeout, retry interval, and validated controller identity.
 
 The web dashboard displays a dedicated handshake banner. It remains amber and
 states that live polling is disabled while verification is pending, then changes
 to green and shows the validated controller identity after success.
+
+See [FlowDiagram.md](FlowDiagram.md) for the firmware state and wire sequence.
 
 The firmware is deliberately read-only. It contains no parameter-write, commit, reset, or undocumented command implementation.

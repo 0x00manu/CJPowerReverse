@@ -23,7 +23,7 @@ Console.CancelKeyPress += (_, eventArgs) =>
     stopping.Cancel();
 };
 
-using SerialPort port = new(portName, 115200, Parity.None, 8, StopBits.One)
+using SerialPort port = new(portName, 57600, Parity.None, 8, StopBits.One)
 {
     Handshake = Handshake.None,
     DtrEnable = true,
@@ -43,7 +43,7 @@ catch (Exception exception)
 }
 
 Console.WriteLine("CJPower Emulator");
-Console.WriteLine($"Port: {port.PortName} at 115200 8N1, no flow control");
+Console.WriteLine($"Port: {port.PortName}; 7E=57600, 5A A5=115200, 8N1, no flow control");
 Console.WriteLine("State: waiting for captured handshake; dashboard replies are gated until success");
 Console.WriteLine("Press Ctrl+C to stop.");
 Console.WriteLine();
